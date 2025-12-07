@@ -1,131 +1,114 @@
 """Entry point for the PaperBoi FastAPI application."""
-from __future__ import annotations
-
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, FastAPI, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
+import httpx
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+from loguru import logger
 from redis.asyncio import Redis
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
-from app.config import settings
-from app.middleware.error_handler import setup_exception_handlers
-from app.middleware.logging import RateLimitMiddleware, RequestContextLogMiddleware
-from app.models.database import close_engine, get_engine, init_engine
-from app.utils.exceptions import ApplicationError
-from app.utils.logger import configure_logging, get_logger
+from app.core.config import settings
 
-logger = get_logger(__name__)
+app = FastAPI(title=settings.app_name, debug=settings.debug)
+
+# Database and cache clients
+engine: AsyncEngine | None = None
+redis_client: Redis | None = None
+scheduler = AsyncIOScheduler(timezone=settings.scheduler_timezone)
 
 
-async def init_redis() -> Redis:
-    """Initialize the Redis client and validate connectivity."""
+async def get_engine() -> AsyncEngine:
+    """Return the initialized SQLAlchemy engine."""
+    if engine is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database engine not initialized")
+    return engine
 
-    redis = Redis.from_url(settings.redis_url, decode_responses=True)
+
+async def get_redis() -> Redis:
+    """Return the initialized Redis client."""
+    if redis_client is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Redis client not initialized")
+    return redis_client
+
+
+async def fetch_latest_news() -> None:
+    """Scheduled task placeholder for fetching and summarizing news articles."""
+    logger.info("Running scheduled news fetch at {}", datetime.now(timezone.utc).isoformat())
     try:
-        await redis.ping()
-    except Exception as exc:  # noqa: BLE001
-        await redis.aclose()
-        msg = f"Unable to connect to Redis: {exc}"
-        raise ApplicationError(detail=msg, status_code=status.HTTP_503_SERVICE_UNAVAILABLE) from exc
-    return redis
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(settings.gdelt_api_url)
+            response.raise_for_status()
+            logger.debug("Fetched news payload size: {} bytes", len(response.content))
+    except httpx.HTTPError as exc:
+        logger.error("Failed to fetch news: {}", exc)
 
 
-def _validate_environment_settings() -> None:
-    """Perform additional environment checks beyond Pydantic validation."""
+@app.on_event("startup")
+async def startup_event() -> None:
+    """Initialize external connections and scheduled jobs."""
+    global engine, redis_client
+    logger.info("Starting PaperBoi backend in %s mode", settings.environment)
 
-    if settings.environment == "production" and settings.debug:
-        raise ApplicationError("Debug mode must be disabled in production", status.HTTP_500_INTERNAL_SERVER_ERROR)
+    engine = create_async_engine(settings.database_url, echo=settings.debug, future=True)
+    redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):  # type: ignore[override]
-    """Manage application startup and shutdown lifecycle."""
-
-    configure_logging()
-    _validate_environment_settings()
-    await init_engine()
-    app.state.redis = await init_redis()
-    yield
-
-    if hasattr(app.state, "redis"):
-        await app.state.redis.aclose()
-    await close_engine()
+    scheduler.add_job(fetch_latest_news, "cron", **{k: v for k, v in zip(["minute", "hour", "day", "month", "day_of_week"], settings.scheduler_news_cron.split())})
+    scheduler.start()
 
 
-app = FastAPI(
-    title=settings.app_name,
-    version="1.0.0",
-    debug=settings.debug,
-    default_response_class=ORJSONResponse,
-    lifespan=lifespan,
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-app.add_middleware(RateLimitMiddleware)
-app.add_middleware(RequestContextLogMiddleware)
-
-setup_exception_handlers(app)
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    """Clean up external connections when the service stops."""
+    if scheduler.running:
+        scheduler.shutdown()
+    if redis_client:
+        await redis_client.close()
+    if engine:
+        await engine.dispose()
 
 
-router = APIRouter(prefix=settings.api_v1_prefix)
-
-
-@router.get("/status", tags=["system"])
-async def status_endpoint() -> dict[str, Any]:
-    """Return a lightweight status payload for API consumers."""
-
-    return {
-        "app": settings.app_name,
-        "environment": settings.environment,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "version": app.version,
-    }
-
-
-@app.get("/healthz", tags=["system"])
-async def health_check() -> dict[str, str]:
-    """Health check endpoint to verify service availability."""
-
+@app.get("/healthz", response_model=Dict[str, Any])
+async def health_check() -> Dict[str, Any]:
+    """Simple health check to verify the API is responsive."""
     return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
-@app.get("/ready", tags=["system"])
-async def readiness_check(engine: AsyncEngine = Depends(get_engine), redis: Redis = Depends(lambda: app.state.redis)) -> dict[str, str]:
-    """Readiness probe to ensure dependencies are reachable."""
-
-    status_report = {"database": "unknown", "cache": "unknown"}
+@app.get("/ready", response_model=Dict[str, Any])
+async def readiness_check(db: AsyncEngine = Depends(get_engine), cache: Redis = Depends(get_redis)) -> Dict[str, Any]:
+    """Readiness probe that validates access to the database and Redis."""
+    status_report: Dict[str, Any] = {"database": "unknown", "cache": "unknown"}
 
     try:
-        async with engine.connect() as connection:
+        async with db.connect() as connection:
             await connection.execute(text("SELECT 1"))
             status_report["database"] = "connected"
     except SQLAlchemyError as exc:
-        logger.error("Database connection failed: %s", exc)
+        logger.error("Database connection failed: {}", exc)
         status_report["database"] = "error"
 
     try:
-        await redis.ping()
+        await cache.ping()
         status_report["cache"] = "connected"
     except Exception as exc:  # noqa: BLE001
-        logger.error("Redis connection failed: %s", exc)
+        logger.error("Redis connection failed: {}", exc)
         status_report["cache"] = "error"
 
     if status_report["database"] != "connected" or status_report["cache"] != "connected":
-        raise ApplicationError(detail=status_report, status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=status_report)
 
     return status_report
 
 
-app.include_router(router)
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:  # type: ignore[override]
+    """Handle unexpected exceptions with a user-friendly message."""
+    logger.exception("Unhandled error: {}", exc)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "An unexpected error occurred. Please try again later."},
+    )
