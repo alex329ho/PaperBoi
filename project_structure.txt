@@ -1,0 +1,27 @@
+PaperBoi/
+├── backend/
+│   ├── .env.example
+│   ├── requirements.txt
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── api/
+│   │   │   └── __init__.py
+│   │   ├── core/
+│   │   │   ├── __init__.py
+│   │   │   └── config.py
+│   │   └── main.py
+│   └── db/
+│       └── init_db.sql
+├── mobile/
+│   ├── .env.example
+│   └── package.json
+├── scripts/
+│   └── verify_setup.sh
+├── Dockerfile
+├── docker-compose.yml
+├── project_structure.txt
+├── SETUP_INSTRUCTIONS.md
+├── setup.sh
+├── setup_windows.bat
+├── verification_checklist.md
+└── .gitignore
