@@ -7,6 +7,7 @@ from uuid import uuid4
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
+from starlette.background import BackgroundTask, BackgroundTasks
 
 from utils.logger import get_logger, set_request_id
 
@@ -37,6 +38,25 @@ class RequestContextLogMiddleware(BaseHTTPMiddleware):
             extra={"status_code": response.status_code, "duration_ms": round(duration_ms, 2)},
         )
 
-        # Clear context after the response has been sent to the client
-        response.call_on_close(lambda: set_request_id(None))
+        # Attempt to clear the request id after response completes.
+        # Use call_on_close when available; otherwise attach a BackgroundTask if supported.
+        try:
+            response.call_on_close(lambda: set_request_id(None))
+        except AttributeError:
+            try:
+                # If the Response supports background tasks, register one.
+                # This works for StreamingResponse and other types that expose .background.
+                if getattr(response, "background", None) is None:
+                    response.background = BackgroundTask(lambda: set_request_id(None))
+                elif isinstance(response.background, BackgroundTasks):
+                    response.background.add_task(set_request_id, None)
+                else:
+                    # Unknown background type: replace with BackgroundTasks (best-effort)
+                    bt = BackgroundTasks()
+                    bt.add_task(set_request_id, None)
+                    response.background = bt
+            except Exception:
+                # Last resort: clear immediately to avoid keeping stale context.
+                set_request_id(None)
+
         return response
