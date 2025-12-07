@@ -1,28 +1,5 @@
-"""Pydantic models for GDELT API responses.
+"""Pydantic models for GDELT API responses."""
 
-Example GDELT API response::
-
-    {
-      "articles": [
-        {
-          "url": "https://...",
-          "url_mobile": "...",
-          "title": "Article Title",
-          "domain": "example.com",
-          "seendate": "YYYYMMDDHHMMSS",
-          "socialimage": "...",
-          "sourcecountry": "US",
-          "sourcename": "CNN",
-          "language": "en",
-          "tone": -8.5
-        }
-      ],
-      "sourceCommon": {
-        "url": "https://...",
-        "summaryUrl": "..."
-      }
-    }
-"""
 from __future__ import annotations
 
 from datetime import datetime
@@ -32,43 +9,67 @@ from pydantic import AnyHttpUrl, BaseModel, Field, HttpUrl, field_validator
 
 
 class SourceCommon(BaseModel):
-    """Metadata about the source returned by GDELT."""
-
     url: Optional[AnyHttpUrl] = Field(default=None, description="Canonical source URL")
     summaryUrl: Optional[AnyHttpUrl] = Field(default=None, description="Summary page URL")
 
 
 class GdeltArticle(BaseModel):
-    """Representation of an article entry from the GDELT API."""
-
     url: HttpUrl
     url_mobile: Optional[AnyHttpUrl] = None
-    title: str
+    title: Optional[str] = None
     domain: Optional[str] = None
-    seendate: str
+    seendate: Optional[str] = None
     socialimage: Optional[AnyHttpUrl] = None
-    sourcecountry: Optional[str] = Field(default=None, min_length=2, max_length=2)
+    # relaxed: accept full names too; service will decide how to use it
+    sourcecountry: Optional[str] = Field(default=None, description="Source country or full name")
     sourcename: Optional[str] = None
-    language: Optional[str] = Field(default=None, min_length=2, max_length=5)
+    language: Optional[str] = Field(default=None, description="Language or full name")
     tone: Optional[float] = None
+
+    @field_validator("url_mobile", "socialimage", mode="before")
+    @classmethod
+    def empty_string_to_none(cls, value):
+        """Treat empty strings as None so empty URL fields don't fail validation."""
+        if value == "" or value is None:
+            return None
+        return value
 
     @field_validator("seendate")
     @classmethod
-    def validate_seendate(cls, value: str) -> str:
-        """Ensure the seendate value follows the expected timestamp format."""
+    def validate_seendate(cls, value: Optional[str]) -> Optional[str]:
+        """Accept multiple timestamp formats used by GDELT and normalize if possible."""
+        if value is None or value == "":
+            return None
 
-        datetime.strptime(value, "%Y%m%d%H%M%S")
+        # GDELT historically used '%Y%m%d%H%M%S', but some responses include
+        # ISO-like 'YYYYMMDDTHHMMSSZ' / 'YYYY-MM-DDTHH:MM:SSZ' variants.
+        candidates = (value,)
+
+        # Try known formats; if parsing succeeds, return the original string.
+        for fmt in ("%Y%m%d%H%M%S", "%Y%m%dT%H%M%SZ", "%Y-%m-%dT%H:%M:%SZ"):
+            try:
+                datetime.strptime(value, fmt)
+                return value
+            except Exception:
+                continue
+
+        # If nothing matched, leave the value (caller must handle missing/unknown format).
         return value
 
     @property
-    def seen_datetime(self) -> datetime:
-        """Return ``seendate`` as a timezone-naive datetime instance."""
+    def seen_datetime(self) -> Optional[datetime]:
+        """Return a datetime parsed from `seendate` when possible."""
+        if not self.seendate:
+            return None
 
-        return datetime.strptime(self.seendate, "%Y%m%d%H%M%S")
+        for fmt in ("%Y%m%d%H%M%S", "%Y%m%dT%H%M%SZ", "%Y-%m-%dT%H:%M:%SZ"):
+            try:
+                return datetime.strptime(self.seendate, fmt)
+            except Exception:
+                continue
+        return None
 
 
 class GdeltResponse(BaseModel):
-    """Top-level response wrapper for GDELT API queries."""
-
     articles: list[GdeltArticle] = Field(default_factory=list)
     sourceCommon: Optional[SourceCommon] = None

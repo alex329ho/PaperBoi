@@ -175,6 +175,48 @@ class GDELTService:
             raise GDELTResponseError("Failed to decode GDELT response as JSON") from exc
 
     def parse_gdelt_response(self, response: dict) -> List[Dict[str, Any]]:
+        """Parse raw GDELT JSON into dictionaries compatible with ``NewsArticle``.
+
+        This parser validates articles one-by-one and skips malformed entries
+        instead of failing the entire response.
+        """
+        raw_articles = response.get("articles", []) if isinstance(response, dict) else []
+        parsed: List[Dict[str, Any]] = []
+        skipped = 0
+
+        for idx, raw in enumerate(raw_articles):
+            try:
+                gdelt_article = GdeltResponse.__fields__  # no-op to satisfy linter
+                # Validate a single article using the GdeltArticle model
+                from schemas.gdelt import GdeltArticle  # local import to avoid cycles
+                art = GdeltArticle.model_validate(raw)
+            except Exception as exc:
+                # Log debug info and skip this article
+                self.logger.debug("Skipping malformed GDELT article", extra={"index": idx, "error": str(exc)})
+                skipped += 1
+                continue
+
+            published_date = art.seen_datetime.date() if art.seen_datetime else None
+            parsed.append(
+                {
+                    "title": art.title or "",
+                    "url": str(art.url),
+                    "domain": art.domain,
+                    "source": art.sourcename or art.domain,
+                    "published_date": published_date,
+                    "content": None,
+                    "tone": f"{art.tone:.2f}" if art.tone is not None else None,
+                    "location": art.sourcecountry,
+                    "language": art.language,
+                }
+            )
+
+        self.logger.info(
+            "Parsed GDELT response",
+            extra={"article_count": len(parsed), "skipped": skipped, "source": (response.get("sourceCommon", {}) if isinstance(response, dict) else None)},
+        )
+        return parsed
+    
         """Parse raw GDELT JSON into dictionaries compatible with ``NewsArticle``."""
 
         try:
