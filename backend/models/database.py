@@ -72,8 +72,15 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 async def validate_connection() -> None:
     """Validate database connectivity by executing a lightweight query."""
 
-    async with engine.connect() as connection:
-        await connection.execute(text("SELECT 1"))
+    try:
+        async with engine.connect() as connection:
+            await connection.execute(text("SELECT 1"))
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(
+            "Failed to connect to the configured database. Ensure the database is "
+            "running and the PAPERBOI_DATABASE_URL environment variable points to "
+            "a reachable instance."
+        ) from exc
 
 
 async def dispose_engine() -> None:

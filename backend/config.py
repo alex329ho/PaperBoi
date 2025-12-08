@@ -28,8 +28,12 @@ class AppSettings(BaseSettings):
     port: int = 8000
 
     database_url: str = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/paperboi",
-        description="SQLAlchemy database URL with async driver",
+        default="sqlite+aiosqlite:///./paperboi.db",
+        description=(
+            "SQLAlchemy database URL with async driver. Defaults to a local SQLite "
+            "database to simplify development, but should be overridden with a "
+            "production-grade Postgres URL when deploying."
+        ),
     )
     database_ssl_mode: Literal["disable", "prefer", "require", "verify-full"] = "prefer"
     database_pool_size: int = 20
