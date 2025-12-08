@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+  <p style="margin-top: 0; font-size: 15px;">Hi {{ user_name }},</p>
+  <p style="font-size: 15px; line-height: 1.6;">
+    Welcome to <strong>PaperBoi</strong> — your personal news concierge. We'll send you crisp summaries tailored to the topics you care about.
+  </p>
+
+  <div class="card">
+    <h3 style="margin: 0 0 8px; font-size: 18px;">Get started</h3>
+    <ol style="margin: 0 0 0 18px; padding: 0; line-height: 1.6;">
+      <li>Update your reading preferences.</li>
+      <li>Choose how often you'd like to receive updates.</li>
+      <li>Enjoy concise digests with links to the full stories.</li>
+    </ol>
+    <a class="button" href="{{ preferences_url }}" target="_blank" rel="noopener" style="margin-top: 12px;">Customize preferences</a>
+  </div>
+
+  <div class="card">
+    <h3 style="margin: 0 0 8px; font-size: 18px;">Need help?</h3>
+    <p style="margin: 0 0 8px;">Check out our FAQ to learn how PaperBoi keeps you informed.</p>
+    <a class="button" href="{{ faq_url }}" target="_blank" rel="noopener" style="background: #f59e0b;">View FAQ</a>
+  </div>
+{% endblock %}

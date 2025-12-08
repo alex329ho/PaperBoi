@@ -41,12 +41,17 @@ class AppSettings(BaseSettings):
     openrouter_api_key: str = ""
     firebase_api_key: str = ""
 
+    smtp_provider: Literal["smtp", "gmail", "sendgrid"] = "smtp"
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     smtp_username: str = ""
     smtp_password: str = ""
     smtp_use_tls: bool = False
     smtp_from_email: str = "no-reply@paperboi.app"
+    smtp_from_name: str = "PaperBoi"
+    smtp_reply_to: str = "support@paperboi.app"
+    smtp_rate_limit_per_hour: int = 300
+    sendgrid_api_key: str = ""
 
     api_rate_limit_per_minute: int = 120
 

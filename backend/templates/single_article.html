@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+  <p style="margin-top: 0; font-size: 15px;">Hi {{ user_name }},</p>
+  <p style="font-size: 15px; line-height: 1.6;">
+    Here's a quick alert about a story published on {{ sent_at }}.
+  </p>
+
+  <div class="card">
+    <p style="margin: 0 0 6px; color: #6b7280; font-size: 13px;">{{ article.source or 'Unknown source' }}</p>
+    <h3 style="margin: 0 0 6px; font-size: 20px;">{{ article.title }}</h3>
+    <p style="margin: 0 0 8px; line-height: 1.6;">{{ article.summary }}</p>
+    <a class="button" href="{{ article.url }}" target="_blank" rel="noopener">Read full article</a>
+    {% if article.related %}
+      <div style="margin-top: 12px;">
+        <p style="margin: 0 0 6px; font-weight: 600;">Related articles</p>
+        <ul style="margin: 0; padding-left: 18px;">
+          {% for related in article.related %}
+            <li style="margin-bottom: 6px;"><a href="{{ related.url }}" target="_blank" rel="noopener">{{ related.title }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+
+  <div style="margin-top: 24px;">
+    <a class="button" href="{{ preferences_url }}" target="_blank" rel="noopener">Update preferences</a>
+    <a class="button" href="{{ unsubscribe_url }}" target="_blank" rel="noopener" style="background: #f59e0b; margin-left: 8px;">Unsubscribe</a>
+  </div>
+{% endblock %}
