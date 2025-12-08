@@ -5,7 +5,7 @@ import logging
 from contextvars import ContextVar
 from typing import Optional
 
-from config import AppSettings
+from backend.config import AppSettings
 
 # Context variable used to inject request identifiers into log records
 _request_id_ctx_var: ContextVar[Optional[str]] = ContextVar("request_id", default=None)

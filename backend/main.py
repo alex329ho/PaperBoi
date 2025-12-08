@@ -3,18 +3,19 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from config import settings
-from middleware.error_handler import register_exception_handlers
-from middleware.logging import RequestContextLogMiddleware
-from models import news, user  # noqa: F401 - imported for metadata registration
-from models.database import Base, dispose_engine, get_session, validate_connection
-from utils.logger import configure_logging, get_logger
+from backend.config import settings
+from backend.middleware.auth import JWTAuthMiddleware
+from backend.middleware.rate_limit import RateLimitMiddleware, RateLimiter
+from backend.middleware.error_handler import register_exception_handlers
+from backend.middleware.logging import RequestContextLogMiddleware
+from backend.models import news, user  # noqa: F401 - imported for metadata registration
+from backend.models.database import Base, dispose_engine, get_session, validate_connection
+from backend.routes import auth_router, email_router, health_router, news_router, preferences_router
+from backend.utils.logger import configure_logging, get_logger
 
 configure_logging(settings)
 logger = get_logger(__name__)
@@ -27,6 +28,9 @@ app = FastAPI(
 
 # Middleware configuration
 app.add_middleware(RequestContextLogMiddleware)
+app.add_middleware(JWTAuthMiddleware)
+# Global rate limiter to complement endpoint-level limits
+app.add_middleware(RateLimitMiddleware, limiter=RateLimiter())
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allow_origins,
@@ -35,24 +39,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def register_routes(application: FastAPI) -> None:
+    """Attach versioned API routers to the FastAPI application."""
+
+    api_router = APIRouter(prefix=settings.api_v1_prefix)
+    api_router.include_router(health_router)
+    api_router.include_router(auth_router)
+    api_router.include_router(news_router)
+    api_router.include_router(preferences_router)
+    api_router.include_router(email_router)
+
+    application.include_router(api_router)
+
+
 register_exception_handlers(app)
-
-api_router = APIRouter(prefix=settings.api_v1_prefix)
-
-
-@api_router.get("/health", tags=["health"])
-async def health_check() -> Dict[str, Any]:
-    """Simple liveness probe."""
-
-    return {"status": "ok", "environment": settings.environment}
-
-
-@api_router.get("/status", tags=["health"])
-async def status_check(session: AsyncSession = Depends(get_session)) -> Dict[str, Any]:
-    """Validate dependencies including database connectivity."""
-
-    await session.execute(text("SELECT 1"))
-    return {"status": "ready", "database": "connected"}
+register_routes(app)
 
 
 @app.on_event("startup")
@@ -79,10 +80,6 @@ async def root_healthcheck() -> JSONResponse:
     """Kubernetes-friendly liveness endpoint without API versioning."""
 
     return JSONResponse(content={"status": "ok"})
-
-
-# Placeholder for future routers under /api/v1
-app.include_router(api_router)
 
 
 __all__ = ["app", "Base"]

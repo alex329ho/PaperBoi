@@ -31,7 +31,7 @@ from typing import Any, Dict, Iterable, List, Optional
 import httpx
 from redis.asyncio import Redis
 
-from config import settings
+from backend.config import settings
 from schemas.openrouter import ChatCompletionRequest, ChatCompletionResponse, ChatMessage
 from services.exceptions import (
     OpenRouterAuthenticationError,
