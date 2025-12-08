@@ -15,8 +15,8 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from main import app
-from dependencies import get_db_session, get_redis
-from models.database import Base
+from backend.dependencies import get_db_session, get_redis
+from backend.models.database import Base
 
 
 def setup_app() -> TestClient:

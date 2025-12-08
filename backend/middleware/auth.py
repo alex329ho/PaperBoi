@@ -5,8 +5,8 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-from dependencies import decode_token
-from utils.logger import get_logger
+from backend.dependencies import decode_token
+from backend.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

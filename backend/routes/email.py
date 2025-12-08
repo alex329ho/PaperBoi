@@ -7,10 +7,10 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field
 
-from dependencies import get_current_user, get_email_service
-from middleware.rate_limit import RateLimiter
+from backend.dependencies import get_current_user, get_email_service
+from backend.middleware.rate_limit import RateLimiter
 from services.email_service import EmailService
-from utils.logger import get_logger
+from backend.utils.logger import get_logger
 
 router = APIRouter(prefix="/email", tags=["email"])
 logger = get_logger(__name__)

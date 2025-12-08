@@ -10,7 +10,7 @@ from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dependencies import (
+from backend.dependencies import (
     generate_reset_token,
     get_db_session,
     get_redis,
@@ -18,9 +18,9 @@ from dependencies import (
     issue_token_pair,
     verify_password,
 )
-from middleware.rate_limit import RateLimiter
-from models.user import User, UserPreferences
-from utils.logger import get_logger
+from backend.middleware.rate_limit import RateLimiter
+from backend.models.user import User, UserPreferences
+from backend.utils.logger import get_logger
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = get_logger(__name__)
@@ -107,7 +107,7 @@ async def login(
 async def refresh(payload: RefreshRequest) -> Dict[str, Any]:
     """Refresh an expired access token."""
 
-    from dependencies import decode_token
+    from backend.dependencies import decode_token
 
     decoded = decode_token(payload.refresh_token, verify_type="refresh")
     user_id = decoded.get("sub")
