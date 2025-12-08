@@ -4,8 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import List, Optional, TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -51,9 +50,9 @@ class UserPreferences(Base):
     __tablename__ = "user_preferences"
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    topics: Mapped[list[str]] = mapped_column(JSONB, default=list)
-    regions: Mapped[list[str]] = mapped_column(JSONB, default=list)
-    languages: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    topics: Mapped[list[str]] = mapped_column(JSON, default=list)
+    regions: Mapped[list[str]] = mapped_column(JSON, default=list)
+    languages: Mapped[list[str]] = mapped_column(JSON, default=list)
     notification_time: Mapped[str] = mapped_column(String(10), default="08:00")
     notification_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
