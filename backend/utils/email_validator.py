@@ -1,7 +1,22 @@
 """Email validation and normalization helpers."""
 from __future__ import annotations
 
-from email_validator import EmailNotValidError, validate_email
+def _import_email_validator():
+    """Import ``email_validator`` lazily so the app can start without it.
+
+    FastAPI will load all modules at startup, so a missing optional dependency
+    should not prevent the application from booting. We defer the import to the
+    point of use and raise a clear error that tells operators how to install it.
+    """
+
+    try:
+        from email_validator import EmailNotValidError, validate_email
+    except ModuleNotFoundError as exc:  # pragma: no cover - defensive import guard
+        raise RuntimeError(
+            "email-validator is required but not installed. Install dependencies via `pip install -r backend/requirements.txt`."
+        ) from exc
+
+    return EmailNotValidError, validate_email
 
 
 class InvalidEmailError(ValueError):
@@ -26,6 +41,8 @@ def validate_email_address(address: str) -> str:
     InvalidEmailError
         If the address is syntactically invalid.
     """
+
+    EmailNotValidError, validate_email = _import_email_validator()
 
     try:
         return validate_email(address, check_deliverability=False).email

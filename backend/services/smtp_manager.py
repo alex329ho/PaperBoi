@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import smtplib
+import sys
 from collections import deque
 from dataclasses import dataclass
 from email.message import EmailMessage
@@ -20,7 +21,13 @@ class EmailDeliveryError(Exception):
     """Raised when an email cannot be delivered."""
 
 
-@dataclass(slots=True)
+# ``slots`` was added to dataclasses in Python 3.10. Use it when available to
+# minimize attribute dictionaries, but remain compatible with Python 3.9 by
+# falling back to a regular dataclass.
+_EMAIL_PROVIDER_CONFIG_KWARGS = {"slots": True} if sys.version_info >= (3, 10) else {}
+
+
+@dataclass(**_EMAIL_PROVIDER_CONFIG_KWARGS)
 class EmailProviderConfig:
     """Configuration for connecting to an SMTP provider."""
 

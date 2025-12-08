@@ -4,9 +4,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import EmailStr, Field
+from pydantic import Field, field_validator
 
 from .base import BaseSchema
+from backend.utils.email_validator import validate_email_address
 
 
 class UserPreferencesBase(BaseSchema):
@@ -34,8 +35,13 @@ class UserPreferencesRead(UserPreferencesBase):
 class UserBase(BaseSchema):
     """Base attributes shared by user schemas."""
 
-    email: EmailStr
+    email: str
     is_active: bool = True
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return validate_email_address(value)
 
 
 class UserCreate(UserBase):
