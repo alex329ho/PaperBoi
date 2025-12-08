@@ -27,7 +27,7 @@ class MockResponse:
 
 
 class MockHttpClient:
-    async def post(self, url, headers=None, json=None, timeout=None):
+    async def post(self, url, headers=None, json_payload=None, timeout=None):
         resp = {
             "id": "gen-123",
             "choices": [
