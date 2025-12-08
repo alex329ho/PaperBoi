@@ -7,7 +7,6 @@ from typing import Annotated, AsyncGenerator, Optional
 
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from passlib.context import CryptContext
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +21,7 @@ from backend.utils.logger import get_logger
 
 logger = get_logger(__name__)
 security_scheme = HTTPBearer(auto_error=False)
-password_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+_password_context: "CryptContext | None" = None
 
 _redis_client: Redis | None = None
 
@@ -48,6 +47,29 @@ def _get_jwt_module():
             "PyJWT is required but not installed. Install dependencies via `pip install -r backend/requirements.txt`."
         ) from exc
     return jwt
+
+
+def _get_password_context():
+    """Create a password hashing context, importing Passlib lazily.
+
+    Raises
+    ------
+    RuntimeError
+        If ``passlib`` is missing, with installation guidance.
+    """
+
+    global _password_context
+    if _password_context is None:
+        try:
+            from passlib.context import CryptContext
+        except ModuleNotFoundError as exc:  # pragma: no cover - defensive guard
+            raise RuntimeError(
+                "Passlib is required but not installed. Install dependencies via `pip install -r backend/requirements.txt`."
+            ) from exc
+
+        _password_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+
+    return _password_context
 
 
 async def get_redis() -> Redis:
@@ -109,13 +131,15 @@ def decode_token(token: str, *, verify_type: Optional[str] = None) -> dict:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Validate a password against a stored hash."""
 
-    return password_context.verify(plain_password, hashed_password)
+    context = _get_password_context()
+    return context.verify(plain_password, hashed_password)
 
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt."""
 
-    return password_context.hash(password)
+    context = _get_password_context()
+    return context.hash(password)
 
 
 async def get_current_user(
