@@ -6,29 +6,41 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping
 
 from bs4 import BeautifulSoup
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+try:  # pragma: no cover - fallback for environments without Jinja2
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+except ImportError:  # pragma: no cover - graceful degradation
+    Environment = None  # type: ignore[assignment]
+    FileSystemLoader = select_autoescape = None  # type: ignore[assignment]
 
 TEMPLATES_DIR = Path(__file__).resolve().parents[1] / "templates"
 
-_env = Environment(
-    loader=FileSystemLoader(str(TEMPLATES_DIR)),
-    autoescape=select_autoescape(["html", "xml"]),
-    enable_async=False,
-    trim_blocks=True,
-    lstrip_blocks=True,
-)
-_env.globals.update(now=datetime.utcnow)
+if Environment:
+    _env = Environment(
+        loader=FileSystemLoader(str(TEMPLATES_DIR)),
+        autoescape=select_autoescape(["html", "xml"]),
+        enable_async=False,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+    _env.globals.update(now=datetime.utcnow)
+else:  # pragma: no cover - fallback when templating library unavailable
+    _env = None
 
 
 def get_environment() -> Environment:
     """Return a configured Jinja2 environment for email templates."""
-
+    if _env is None:
+        raise RuntimeError("Jinja2 environment is not available")
     return _env
 
 
 def render_template(template_name: str, context: Mapping[str, Any]) -> str:
     """Render an HTML template with the provided context."""
-
+    if _env is None:
+        # Fallback rendering without Jinja2
+        body = "\n".join(f"{key}: {value}" for key, value in context.items())
+        return f"Template: {template_name}\n{body}"
     template = _env.get_template(template_name)
     return template.render(**context)
 

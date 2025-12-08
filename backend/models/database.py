@@ -7,6 +7,7 @@ from typing import Any, AsyncGenerator
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import StaticPool
 
 from config import settings
 
@@ -17,6 +18,9 @@ class Base(DeclarativeBase):
 
 def _build_connect_args() -> dict[str, Any]:
     """Create SSL connection arguments based on configuration."""
+
+    if settings.database_url.startswith("sqlite+aiosqlite"):
+        return {"check_same_thread": False}
 
     if settings.database_ssl_mode == "disable":
         return {}
@@ -31,13 +35,24 @@ def _build_connect_args() -> dict[str, Any]:
     return {"ssl": ssl.create_default_context()}
 
 
+def _engine_kwargs() -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        "echo": settings.debug,
+        "pool_pre_ping": True,
+        "connect_args": _build_connect_args(),
+    }
+
+    if settings.database_url.startswith("sqlite+aiosqlite"):
+        kwargs["poolclass"] = StaticPool
+    else:
+        kwargs["pool_size"] = settings.database_pool_size
+        kwargs["max_overflow"] = settings.database_max_overflow
+    return kwargs
+
+
 engine: AsyncEngine = create_async_engine(
     settings.database_url,
-    echo=settings.debug,
-    pool_size=settings.database_pool_size,
-    max_overflow=settings.database_max_overflow,
-    pool_pre_ping=True,
-    connect_args=_build_connect_args(),
+    **_engine_kwargs(),
 )
 
 # Async session factory for request-scoped sessions

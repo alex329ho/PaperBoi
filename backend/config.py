@@ -92,8 +92,8 @@ class AppSettings(BaseSettings):
     @classmethod
     def ensure_async_driver(cls, value: str) -> str:
         """Validate that the database URL is configured for async access."""
-        if "+asyncpg" not in value:
-            raise ValueError("Database URL must use an async driver such as asyncpg")
+        if "+asyncpg" not in value and "+aiosqlite" not in value:
+            raise ValueError("Database URL must use an async driver such as asyncpg or aiosqlite")
         return value
 
     @field_validator("environment")
