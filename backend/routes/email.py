@@ -9,7 +9,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 from backend.dependencies import get_current_user, get_email_service
 from backend.middleware.rate_limit import RateLimiter
-from services.email_service import EmailService
+from backend.services.email_service import EmailService
 from backend.utils.logger import get_logger
 
 router = APIRouter(prefix="/email", tags=["email"])

@@ -4,8 +4,8 @@ from __future__ import annotations
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
-from utils.exceptions import ApplicationError
-from utils.logger import get_logger, get_request_id
+from backend.utils.exceptions import ApplicationError
+from backend.utils.logger import get_logger, get_request_id
 
 logger = get_logger(__name__)
 

@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Dict
 
-from utils.logger import get_logger
+from backend.utils.logger import get_logger
 
 
 class CostTracker:

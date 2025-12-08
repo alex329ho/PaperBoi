@@ -12,9 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.dependencies import get_db_session, get_gdelt_service, get_summarization_service
 from backend.middleware.rate_limit import RateLimiter
 from backend.models.news import NewsArticle, Summary
-from schemas.news import NewsArticleRead, SummaryRead
-from services.gdelt_service import GDELTService
-from services.summarization import SummarizationService
+from backend.schemas.news import NewsArticleRead, SummaryRead
+from backend.services.gdelt_service import GDELTService
+from backend.services.summarization import SummarizationService
 from backend.utils.logger import get_logger
 
 router = APIRouter(prefix="/news", tags=["news"])

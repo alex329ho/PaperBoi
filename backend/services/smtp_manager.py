@@ -9,7 +9,7 @@ from email.message import EmailMessage
 from typing import Deque, Dict, Iterable, Optional
 
 from backend.config import settings
-from utils.logger import get_logger
+from backend.utils.logger import get_logger
 
 
 class EmailRateLimitError(Exception):

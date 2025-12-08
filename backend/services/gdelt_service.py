@@ -21,9 +21,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import settings
-from models.news import NewsArticle
-from schemas.gdelt import GdeltResponse
-from services.exceptions import (
+from backend.models.news import NewsArticle
+from backend.schemas.gdelt import GdeltResponse
+from backend.services.exceptions import (
     GDELTContentFetchError,
     GDELTDatabaseError,
     GDELTInvalidParameterError,
@@ -31,9 +31,9 @@ from services.exceptions import (
     GDELTRateLimitError,
     GDELTResponseError,
 )
-from utils.logger import get_logger
-from utils.retry_handler import execute_with_retry
-from utils.url_utils import hash_url, is_valid_url
+from backend.utils.logger import get_logger
+from backend.utils.retry_handler import execute_with_retry
+from backend.utils.url_utils import hash_url, is_valid_url
 
 
 class GDELTService:
@@ -188,7 +188,7 @@ class GDELTService:
             try:
                 gdelt_article = GdeltResponse.__fields__  # no-op to satisfy linter
                 # Validate a single article using the GdeltArticle model
-                from schemas.gdelt import GdeltArticle  # local import to avoid cycles
+                from backend.schemas.gdelt import GdeltArticle  # local import to avoid cycles
                 art = GdeltArticle.model_validate(raw)
             except Exception as exc:
                 # Log debug info and skip this article

@@ -15,9 +15,9 @@ import sys
 # Ensure project root is on the import path for module resolution
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from services.email_service import EmailService
-from services.smtp_manager import EmailProviderConfig, EmailRateLimitError, SMTPManager
-from utils.email_validator import InvalidEmailError
+from backend.services.email_service import EmailService
+from backend.services.smtp_manager import EmailProviderConfig, EmailRateLimitError, SMTPManager
+from backend.utils.email_validator import InvalidEmailError
 
 
 class DummySMTP:

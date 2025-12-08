@@ -9,7 +9,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 from starlette.background import BackgroundTask, BackgroundTasks
 
-from utils.logger import get_logger, set_request_id
+from backend.utils.logger import get_logger, set_request_id
 
 logger = get_logger(__name__)
 

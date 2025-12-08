@@ -3,7 +3,7 @@ import asyncio
 import json
 from typing import Optional, Dict, Any
 
-from services.gdelt_service import GDELTService
+from backend.services.gdelt_service import GDELTService
 
 class AsyncRedisStub:
     def __init__(self):

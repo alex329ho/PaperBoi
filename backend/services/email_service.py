@@ -6,16 +6,16 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List, Mapping, MutableMapping
 from uuid import uuid4
 
-from schemas.email import BatchEmailResponse, EmailDeliveryRecord, EmailStatus, SingleArticlePayload
-from services.smtp_manager import EmailDeliveryError, EmailRateLimitError, SMTPManager
-from utils.email_validator import InvalidEmailError, validate_email_address, validate_email_addresses
-from utils.html_builder import (
+from backend.schemas.email import BatchEmailResponse, EmailDeliveryRecord, EmailStatus, SingleArticlePayload
+from backend.services.smtp_manager import EmailDeliveryError, EmailRateLimitError, SMTPManager
+from backend.utils.email_validator import InvalidEmailError, validate_email_address, validate_email_addresses
+from backend.utils.html_builder import (
     html_to_text,
     render_daily_summary,
     render_single_article,
     render_welcome_email,
 )
-from utils.logger import get_logger
+from backend.utils.logger import get_logger
 
 DEFAULT_PREFERENCES_URL = "https://paperboi.app/preferences"
 DEFAULT_UNSUBSCRIBE_URL = "https://paperboi.app/unsubscribe"
