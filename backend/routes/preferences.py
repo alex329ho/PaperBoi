@@ -9,10 +9,10 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dependencies import get_current_user, get_db_session
-from middleware.rate_limit import RateLimiter
-from models.user import User, UserPreferences
-from utils.logger import get_logger
+from backend.dependencies import get_current_user, get_db_session
+from backend.middleware.rate_limit import RateLimiter
+from backend.models.user import User, UserPreferences
+from backend.utils.logger import get_logger
 
 router = APIRouter(prefix="/preferences", tags=["preferences"])
 logger = get_logger(__name__)

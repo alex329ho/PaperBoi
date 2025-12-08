@@ -15,10 +15,10 @@ import sys
 # Ensure project root is on the import path for module resolution
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from models.database import Base  # noqa: E402
-from models.news import NewsArticle  # noqa: E402
-from services.gdelt_service import GDELTService  # noqa: E402
-from services.exceptions import GDELTInvalidParameterError  # noqa: E402
+from backend.models.database import Base  # noqa: E402
+from backend.models.news import NewsArticle  # noqa: E402
+from backend.services.gdelt_service import GDELTService  # noqa: E402
+from backend.services.exceptions import GDELTInvalidParameterError  # noqa: E402
 
 
 @pytest.fixture()
