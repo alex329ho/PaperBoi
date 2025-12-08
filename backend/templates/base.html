@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title or 'PaperBoi' }}</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --pb-primary: #2563eb;
+        --pb-secondary: #111827;
+        --pb-accent: #f59e0b;
+        --pb-surface: #ffffff;
+        --pb-text: #1f2937;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --pb-surface: #0f172a;
+          --pb-text: #e5e7eb;
+        }
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--pb-surface);
+        color: var(--pb-text);
+        font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      .wrapper {
+        width: 100%;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.07), rgba(245, 158, 11, 0.07));
+        padding: 24px;
+      }
+
+      .container {
+        max-width: 640px;
+        margin: 0 auto;
+        background: var(--pb-surface);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      }
+
+      .header {
+        padding: 24px;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #f9fafb;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+        letter-spacing: 0.02em;
+      }
+
+      .content {
+        padding: 24px;
+      }
+
+      .card {
+        border: 1px solid rgba(37, 99, 235, 0.12);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        background: rgba(37, 99, 235, 0.02);
+      }
+
+      a.button {
+        display: inline-block;
+        padding: 12px 18px;
+        margin-top: 8px;
+        border-radius: 12px;
+        background: #2563eb;
+        color: #f9fafb !important;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .footer {
+        padding: 16px 24px 24px;
+        font-size: 13px;
+        color: #6b7280;
+      }
+
+      .footer a {
+        color: #2563eb;
+      }
+
+      @media only screen and (max-width: 640px) {
+        .container {
+          border-radius: 0;
+        }
+
+        .header,
+        .content,
+        .footer {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="container">
+        <div class="header">
+          <h1>PaperBoi</h1>
+          <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.9">Smart news summaries, delivered.</p>
+        </div>
+        <div class="content">
+          {% block content %}{% endblock %}
+        </div>
+        <div class="footer">
+          <p>
+            You're receiving this email because you subscribed to PaperBoi updates.
+            Manage your <a href="{{ preferences_url }}">preferences</a> or
+            <a href="{{ unsubscribe_url }}">unsubscribe</a> at any time.
+          </p>
+          <p style="margin-top: 8px;">© {{ year or now().year }} PaperBoi. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

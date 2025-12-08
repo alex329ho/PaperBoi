@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+  <p style="margin-top: 0; font-size: 15px;">Hi {{ user_name }},</p>
+  <p style="font-size: 15px; line-height: 1.6;">
+    Here is your curated summary for {{ date }}. We found {{ count }} article{{ 's' if count != 1 else '' }} you may enjoy.
+  </p>
+
+  {% if articles %}
+    {% for article in articles %}
+      <div class="card">
+        <p style="margin: 0 0 6px; color: #6b7280; font-size: 13px;">{{ article.source or 'Unknown source' }}</p>
+        <h3 style="margin: 0 0 6px; font-size: 18px;">{{ article.title }}</h3>
+        <p style="margin: 0 0 8px; line-height: 1.5;">{{ article.summary }}</p>
+        <a class="button" href="{{ article.url }}" target="_blank" rel="noopener">Read full article</a>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="card">
+      <h3 style="margin: 0 0 6px; font-size: 18px;">No fresh stories</h3>
+      <p style="margin: 0;">We'll keep watching for new articles that match your preferences.</p>
+    </div>
+  {% endif %}
+
+  <div style="margin-top: 24px;">
+    <a class="button" href="{{ preferences_url }}" target="_blank" rel="noopener">Update preferences</a>
+    <a class="button" href="{{ unsubscribe_url }}" target="_blank" rel="noopener" style="background: #f59e0b; margin-left: 8px;">Unsubscribe</a>
+  </div>
+{% endblock %}
