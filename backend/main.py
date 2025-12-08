@@ -40,13 +40,20 @@ app.add_middleware(
 )
 
 register_exception_handlers(app)
+register_routes(app)
 
-api_router = APIRouter(prefix=settings.api_v1_prefix)
-api_router.include_router(health_router)
-api_router.include_router(auth_router)
-api_router.include_router(news_router)
-api_router.include_router(preferences_router)
-api_router.include_router(email_router)
+
+def register_routes(application: FastAPI) -> None:
+    """Attach versioned API routers to the FastAPI application."""
+
+    api_router = APIRouter(prefix=settings.api_v1_prefix)
+    api_router.include_router(health_router)
+    api_router.include_router(auth_router)
+    api_router.include_router(news_router)
+    api_router.include_router(preferences_router)
+    api_router.include_router(email_router)
+
+    application.include_router(api_router)
 
 
 @app.on_event("startup")
@@ -73,10 +80,6 @@ async def root_healthcheck() -> JSONResponse:
     """Kubernetes-friendly liveness endpoint without API versioning."""
 
     return JSONResponse(content={"status": "ok"})
-
-
-# Placeholder for future routers under /api/v1
-app.include_router(api_router)
 
 
 __all__ = ["app", "Base"]
