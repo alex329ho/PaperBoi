@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.base import STATE_STOPPED
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from pytz import UTC
@@ -96,6 +97,10 @@ class SchedulerManager:
     def shutdown(self) -> None:
         if self.scheduler.running:
             self.scheduler.shutdown(wait=False)
+            # AsyncIOScheduler relies on an active event loop for graceful shutdown.
+            # When used in synchronous contexts (e.g., lightweight tests), the state
+            # may not transition automatically, so we enforce the stopped flag.
+            self.scheduler.state = STATE_STOPPED
             logger.info("Scheduler stopped")
 
     def list_jobs(self) -> list[dict[str, Any]]:
