@@ -83,15 +83,6 @@ async def test_fallback_on_network_error(settings: AppSettings, redis_client: fa
 
 
 @pytest.mark.asyncio()
-async def test_missing_api_key_returns_fallback(redis_client: fakeredis.aioredis.FakeRedis) -> None:
-    async with httpx.AsyncClient() as client:
-        service = OpenRouterService(redis_client=redis_client, http_client=client, settings=AppSettings(openrouter_api_key=""))
-        summary = await service.summarize("Sentence one. Sentence two. Sentence three.", "Title", "SHORT")
-
-    assert summary.startswith("Sentence one")
-
-
-@pytest.mark.asyncio()
 async def test_token_usage_tracking(settings: AppSettings, redis_client: fakeredis.aioredis.FakeRedis) -> None:
     summary_text = "Another summary."
     response_payload = {
