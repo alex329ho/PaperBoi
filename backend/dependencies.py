@@ -5,7 +5,6 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, AsyncGenerator, Optional
 
-import jwt
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
@@ -26,6 +25,29 @@ security_scheme = HTTPBearer(auto_error=False)
 password_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 _redis_client: Redis | None = None
+
+
+def _get_jwt_module():
+    """Import the PyJWT module lazily to avoid startup failures when missing.
+
+    Returns
+    -------
+    ModuleType
+        The imported ``jwt`` module.
+
+    Raises
+    ------
+    RuntimeError
+        If PyJWT is not installed, with guidance on how to install it.
+    """
+
+    try:
+        import jwt
+    except ModuleNotFoundError as exc:  # pragma: no cover - defensive guard
+        raise RuntimeError(
+            "PyJWT is required but not installed. Install dependencies via `pip install -r backend/requirements.txt`."
+        ) from exc
+    return jwt
 
 
 async def get_redis() -> Redis:
@@ -63,17 +85,19 @@ def create_access_token(subject: str, expires_minutes: int | None = None, *, tok
 
     expiration = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes or settings.jwt_expiration_minutes)
     payload = {"sub": subject, "exp": expiration, "type": token_type}
-    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+    jwt_module = _get_jwt_module()
+    return jwt_module.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
 def decode_token(token: str, *, verify_type: Optional[str] = None) -> dict:
     """Decode and validate a JWT token."""
 
+    jwt_module = _get_jwt_module()
     try:
-        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
-    except jwt.ExpiredSignatureError as exc:  # pragma: no cover - safety
+        payload = jwt_module.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    except jwt_module.ExpiredSignatureError as exc:  # pragma: no cover - safety
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired") from exc
-    except jwt.InvalidTokenError as exc:  # pragma: no cover - safety
+    except jwt_module.InvalidTokenError as exc:  # pragma: no cover - safety
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
 
     if verify_type and payload.get("type") != verify_type:
