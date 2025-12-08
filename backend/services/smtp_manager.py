@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from email.message import EmailMessage
 from typing import Deque, Dict, Iterable, Optional
 
-from config import settings
+from backend.config import settings
 from utils.logger import get_logger
 
 

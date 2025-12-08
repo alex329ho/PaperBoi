@@ -20,7 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config import settings
+from backend.config import settings
 from models.news import NewsArticle
 from schemas.gdelt import GdeltResponse
 from services.exceptions import (

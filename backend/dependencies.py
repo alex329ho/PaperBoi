@@ -13,13 +13,13 @@ from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config import settings
-from models.database import get_session
-from models.user import User
-from services.email_service import EmailService
-from services.gdelt_service import GDELTService
-from services.summarization import SummarizationService
-from utils.logger import get_logger
+from backend.config import settings
+from backend.models.database import get_session
+from backend.models.user import User
+from backend.services.email_service import EmailService
+from backend.services.gdelt_service import GDELTService
+from backend.services.summarization import SummarizationService
+from backend.utils.logger import get_logger
 
 logger = get_logger(__name__)
 security_scheme = HTTPBearer(auto_error=False)

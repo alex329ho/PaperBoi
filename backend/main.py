@@ -7,15 +7,15 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from config import settings
-from middleware.auth import JWTAuthMiddleware
-from middleware.rate_limit import RateLimitMiddleware, RateLimiter
-from middleware.error_handler import register_exception_handlers
-from middleware.logging import RequestContextLogMiddleware
-from models import news, user  # noqa: F401 - imported for metadata registration
-from models.database import Base, dispose_engine, get_session, validate_connection
-from routes import auth_router, email_router, health_router, news_router, preferences_router
-from utils.logger import configure_logging, get_logger
+from backend.config import settings
+from backend.middleware.auth import JWTAuthMiddleware
+from backend.middleware.rate_limit import RateLimitMiddleware, RateLimiter
+from backend.middleware.error_handler import register_exception_handlers
+from backend.middleware.logging import RequestContextLogMiddleware
+from backend.models import news, user  # noqa: F401 - imported for metadata registration
+from backend.models.database import Base, dispose_engine, get_session, validate_connection
+from backend.routes import auth_router, email_router, health_router, news_router, preferences_router
+from backend.utils.logger import configure_logging, get_logger
 
 configure_logging(settings)
 logger = get_logger(__name__)
@@ -39,10 +39,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-register_exception_handlers(app)
-register_routes(app)
-
-
 def register_routes(application: FastAPI) -> None:
     """Attach versioned API routers to the FastAPI application."""
 
@@ -54,6 +50,10 @@ def register_routes(application: FastAPI) -> None:
     api_router.include_router(email_router)
 
     application.include_router(api_router)
+
+
+register_exception_handlers(app)
+register_routes(app)
 
 
 @app.on_event("startup")

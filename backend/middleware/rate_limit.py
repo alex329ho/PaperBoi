@@ -11,7 +11,7 @@ from redis.asyncio import Redis
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-from config import settings
+from backend.config import settings
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
