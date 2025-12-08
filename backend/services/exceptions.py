@@ -1,4 +1,4 @@
-"""Custom exceptions for GDELT integration operations."""
+"""Custom exceptions for GDELT and OpenRouter integration operations."""
 from __future__ import annotations
 
 from typing import Any
@@ -34,3 +34,27 @@ class GDELTDatabaseError(GDELTError):
 
 class GDELTContentFetchError(GDELTError):
     """Raised when article content retrieval fails."""
+
+
+class OpenRouterError(Exception):
+    """Base error for all OpenRouter summarization failures."""
+
+    def __init__(self, message: str, *, details: Any | None = None) -> None:
+        super().__init__(message)
+        self.details = details
+
+
+class OpenRouterAuthenticationError(OpenRouterError):
+    """Raised when the OpenRouter API rejects authentication."""
+
+
+class OpenRouterRateLimitError(OpenRouterError):
+    """Raised when OpenRouter rate limits are exceeded."""
+
+
+class OpenRouterServiceUnavailableError(OpenRouterError):
+    """Raised when the OpenRouter service is temporarily unavailable."""
+
+
+class OpenRouterResponseError(OpenRouterError):
+    """Raised when OpenRouter returns a malformed or unexpected response."""
