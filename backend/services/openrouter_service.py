@@ -75,6 +75,9 @@ class OpenRouterService:
     ) -> None:
         self.settings = settings or get_settings()
         self.api_key = self.settings.openrouter_api_key
+        if not self.api_key:
+            raise OpenRouterAuthenticationError("OpenRouter API key is not configured")
+
         self.redis_client = redis_client
         self.http_client = http_client or httpx.AsyncClient(timeout=DEFAULT_TIMEOUT)
         self.cost_tracker = cost_tracker or CostTracker(logger=logger)
@@ -102,13 +105,6 @@ class OpenRouterService:
         if cached is not None:
             self.logger.info("Cache hit for summary", extra={"length": normalized_length, "cache_key": cache_key})
             return cached
-
-        if not self.api_key:
-            self.logger.error(
-                "OpenRouter API key is not configured; returning fallback summary",
-                extra={"length": normalized_length},
-            )
-            return self._fallback_summary(text)
 
         await self._enforce_rate_limit()
 
@@ -154,10 +150,6 @@ class OpenRouterService:
 
     async def validate_api_key(self) -> bool:
         """Perform a lightweight request to validate the configured API key."""
-
-        if not self.api_key:
-            self.logger.warning("OpenRouter API key is not configured; validation skipped")
-            return False
 
         try:
             payload = self._build_request(self.PROMPT_TEMPLATES["SHORT"], "Connectivity test", "", 1, False)
