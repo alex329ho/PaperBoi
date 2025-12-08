@@ -40,14 +40,36 @@ class SchedulerManager:
     """Manage APScheduler lifecycle and job registration."""
 
     def __init__(self, *, timezone: Any = DEFAULT_TIMEZONE) -> None:
+        self._event_loop = self._ensure_event_loop()
         jobstores = {
             "default": SQLAlchemyJobStore(url=sync_database_url(settings.database_url)),
         }
         executors = {
             "default": ThreadPoolExecutor(max_workers=5),
         }
-        self.scheduler = AsyncIOScheduler(jobstores=jobstores, executors=executors, timezone=timezone or UTC)
+        self.scheduler = AsyncIOScheduler(
+            jobstores=jobstores,
+            executors=executors,
+            timezone=timezone or UTC,
+            event_loop=self._event_loop,
+        )
         self._register_default_jobs()
+
+    @staticmethod
+    def _ensure_event_loop() -> asyncio.AbstractEventLoop:
+        """Return a running event loop, creating one if necessary.
+
+        APScheduler's AsyncIOScheduler expects an active loop when starting; test
+        environments may not have one. This helper guarantees a usable loop and
+        sets it as the current loop when none exists.
+        """
+
+        try:
+            return asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop
 
     def _register_default_jobs(self) -> None:
         for name, config in JOB_SCHEDULES.items():
@@ -91,6 +113,8 @@ class SchedulerManager:
 
     def start(self) -> None:
         if not self.scheduler.running:
+            if not self.scheduler._eventloop or self.scheduler._eventloop.is_closed():
+                self.scheduler._eventloop = self._ensure_event_loop()
             self.scheduler.start()
             logger.info("Scheduler started")
 
