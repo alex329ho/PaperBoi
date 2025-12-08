@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field, field_validator
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,7 @@ from backend.dependencies import (
 )
 from backend.middleware.rate_limit import RateLimiter
 from backend.models.user import User, UserPreferences
+from backend.utils.email_validator import validate_email_address
 from backend.utils.logger import get_logger
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -35,14 +36,24 @@ def envelope(data: Any, message: str | None = None) -> Dict[str, Any]:
 
 
 class RegisterRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str = Field(min_length=8)
     name: str
 
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return validate_email_address(value)
+
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return validate_email_address(value)
 
 
 class RefreshRequest(BaseModel):
@@ -50,7 +61,12 @@ class RefreshRequest(BaseModel):
 
 
 class PasswordResetRequest(BaseModel):
-    email: EmailStr
+    email: str
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return validate_email_address(value)
 
 
 class PasswordConfirmRequest(BaseModel):
