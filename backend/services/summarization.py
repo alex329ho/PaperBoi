@@ -5,8 +5,8 @@ from typing import Any, Dict, List
 
 from redis.asyncio import Redis
 
-from services.openrouter_service import OpenRouterService
-from utils.cost_tracker import CostTracker
+from backend.services.openrouter_service import OpenRouterService
+from backend.utils.cost_tracker import CostTracker
 
 
 class SummarizationService:

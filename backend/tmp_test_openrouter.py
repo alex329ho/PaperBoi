@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-from services.openrouter_service import OpenRouterService
+from backend.services.openrouter_service import OpenRouterService
 
 
 class AsyncRedisMock:

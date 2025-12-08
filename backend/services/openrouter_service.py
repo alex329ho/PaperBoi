@@ -32,18 +32,18 @@ import httpx
 from redis.asyncio import Redis
 
 from backend.config import settings
-from schemas.openrouter import ChatCompletionRequest, ChatCompletionResponse, ChatMessage
-from services.exceptions import (
+from backend.schemas.openrouter import ChatCompletionRequest, ChatCompletionResponse, ChatMessage
+from backend.services.exceptions import (
     OpenRouterAuthenticationError,
     OpenRouterError,
     OpenRouterRateLimitError,
     OpenRouterResponseError,
     OpenRouterServiceUnavailableError,
 )
-from utils.cost_tracker import CostTracker
-from utils.logger import get_logger
-from utils.retry_handler import execute_with_retry
-from utils.token_counter import approx_token_count, count_tokens_for_messages
+from backend.utils.cost_tracker import CostTracker
+from backend.utils.logger import get_logger
+from backend.utils.retry_handler import execute_with_retry
+from backend.utils.token_counter import approx_token_count, count_tokens_for_messages
 
 
 class OpenRouterService:

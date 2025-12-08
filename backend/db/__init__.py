@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from models import email_log, news, user  # noqa: F401 - ensure metadata registration
-from models.database import Base, engine
+from backend.models import email_log, news, user  # noqa: F401 - ensure metadata registration
+from backend.models.database import Base, engine
 
 
 async def init_db(custom_engine: AsyncEngine | None = None) -> None:

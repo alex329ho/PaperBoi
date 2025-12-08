@@ -13,9 +13,9 @@ import sys
 # Ensure project root on path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from schemas.openrouter import ChatChoice, ChatCompletionResponse, ChatMessage, UsageStats  # noqa: E402
-from services.exceptions import OpenRouterServiceUnavailableError  # noqa: E402
-from services.openrouter_service import OpenRouterService  # noqa: E402
+from backend.schemas.openrouter import ChatChoice, ChatCompletionResponse, ChatMessage, UsageStats  # noqa: E402
+from backend.services.exceptions import OpenRouterServiceUnavailableError  # noqa: E402
+from backend.services.openrouter_service import OpenRouterService  # noqa: E402
 
 
 @pytest_asyncio.fixture()
