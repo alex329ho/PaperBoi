@@ -9,9 +9,9 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
-from dependencies import get_db_session, get_redis
-from middleware.rate_limit import RateLimiter
-from utils.logger import get_logger
+from backend.dependencies import get_db_session, get_redis
+from backend.middleware.rate_limit import RateLimiter
+from backend.utils.logger import get_logger
 
 router = APIRouter(prefix="", tags=["health"])
 logger = get_logger(__name__)

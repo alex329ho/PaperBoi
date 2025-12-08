@@ -18,9 +18,9 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from main import app
-from dependencies import get_db_session, get_redis
-from models.database import Base
-from models.news import NewsArticle
+from backend.dependencies import get_db_session, get_redis
+from backend.models.database import Base
+from backend.models.news import NewsArticle
 
 
 @pytest.fixture
