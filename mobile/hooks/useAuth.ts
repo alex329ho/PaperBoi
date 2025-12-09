@@ -5,7 +5,7 @@ import { signInFailure, signInStart, signInSuccess, signOut } from '../store/sli
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
-  const { user, loading, error } = useAppSelector((state) => state.auth);
+  const { user, isLoading, error } = useAppSelector((state) => state.auth);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -44,5 +44,5 @@ export const useAuth = () => {
     dispatch(signOut());
   }, [dispatch]);
 
-  return { user, loading, error, signIn, createAccount, signOutUser };
+  return { user, loading: isLoading, error, signIn, createAccount, signOutUser };
 };
