@@ -15,7 +15,7 @@ export const usePushNotifications = () => {
 
   useEffect(() => {
     configureNotifications()
-      .then(setToken)
+      .then((value) => setToken(value ?? null))
       .catch(() => setToken(null));
   }, []);
 
