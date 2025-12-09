@@ -4,7 +4,7 @@ import { Text } from 'react-native-paper';
 
 interface PreferenceSectionProps {
   title: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const PreferenceSection: React.FC<PreferenceSectionProps> = ({ title, children }) => (

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import NetInfo from '@react-native-community/netinfo';
 
 export const useNetworkStatus = () => {
-  const [state, setState] = useState<NetInfoState | null>(null);
+  const [state, setState] = useState<any>(null);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(setState);
