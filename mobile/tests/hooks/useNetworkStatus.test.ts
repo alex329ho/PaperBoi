@@ -1,5 +1,5 @@
 import NetInfo from '@react-native-community/netinfo';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react-native';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 
 jest.mock('@react-native-community/netinfo');
