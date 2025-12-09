@@ -35,6 +35,77 @@ const authSlice = createSlice({
     setLoading(state, action: PayloadAction<boolean>) {
       state.isLoading = action.payload;
     },
+    signInStart(state) {
+      state.isLoading = true;
+      state.error = null;
+    },
+    signInSuccess(state, action: PayloadAction<UserProfile>) {
+      state.isLoading = false;
+      state.user = action.payload;
+      state.isAuthenticated = true;
+    },
+    signInFailure(state, action: PayloadAction<string>) {
+      state.isLoading = false;
+      state.error = action.payload;
+    },
+    logout(state) {
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+    },
+    setLoading(state, action: PayloadAction<boolean>) {
+      state.isLoading = action.payload;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(loginUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || 'Unable to login';
+      })
+      .addCase(registerUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || 'Unable to register';
+      })
+      .addCase(refreshToken.fulfilled, (state, action) => {
+        state.token = action.payload.token;
+        state.user = action.payload.user ?? state.user;
+        state.isAuthenticated = Boolean(action.payload.token);
+      })
+      .addCase(refreshToken.rejected, (state) => {
+        state.token = null;
+        state.isAuthenticated = false;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.error = action.error.message || 'Unable to logout';
+      });
   },
   extraReducers: (builder) => {
     builder
@@ -89,4 +160,6 @@ const authSlice = createSlice({
 });
 
 export const { setUser, setToken, logout, setError, setLoading } = authSlice.actions;
+export const { signInStart, signInSuccess, signInFailure, signOut } = authSlice.actions;
+export type { UserProfile, AuthState };
 export default authSlice.reducer;

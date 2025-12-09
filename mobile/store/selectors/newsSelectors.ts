@@ -1,4 +1,4 @@
-import { createSelector } from '@reduxjs/toolkit';
+import { createSelector } from 'reselect';
 import { RootState } from '../types';
 
 export const selectNewsState = (state: RootState) => state.news;

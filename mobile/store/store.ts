@@ -8,9 +8,7 @@ import preferencesReducer from './slices/preferencesSlice';
 import syncReducer from './slices/syncSlice';
 import uiReducer from './slices/uiSlice';
 import persistConfig from './persistConfig';
-import { RootState } from './types';
-
-const rootReducer = combineReducers<RootState>({
+const rootReducer = combineReducers({
   auth: authReducer,
   news: newsReducer,
   preferences: preferencesReducer,
@@ -36,7 +34,8 @@ export const persistor = persistStore(store);
 
 export type AppDispatch = typeof store.dispatch;
 export type AppStore = typeof store;
-export type StoreRootState = ReturnType<typeof store.getState>;
+export type RootState = ReturnType<typeof store.getState>;
+export type StoreRootState = RootState;
 export type StoreDispatch = typeof store.dispatch;
 export type StoreGetState = typeof store.getState;
 

@@ -23,7 +23,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, summary, expandable = 
           {content}
         </Text>
         {expandable && summary.length > 220 ? (
-          <Button onPress={() => setExpanded((prev) => !prev)} accessibilityLabel="Toggle summary details">
+          <Button onPress={() => setExpanded(!expanded)} accessibilityLabel="Toggle summary details">
             {expanded ? 'Show Less' : 'Show More'}
           </Button>
         ) : null}

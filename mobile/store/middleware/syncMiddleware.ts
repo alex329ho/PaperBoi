@@ -45,7 +45,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const MAX_RETRIES = 5;
 
-const syncMiddleware: Middleware<{}, RootState> = (storeApi) => {
+const syncMiddleware: Middleware = (storeApi) => {
   let processing = false;
 
   const processQueue = async () => {

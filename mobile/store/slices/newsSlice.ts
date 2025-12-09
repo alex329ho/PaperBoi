@@ -7,7 +7,7 @@ import {
   searchNews,
   persistBookmarkedArticles,
 } from '../thunks/newsThunks';
-import { Article, FilterState, NewsState, PaginationState } from '../types';
+import { Article, FetchFeedParams, FilterState, NewsState, PaginationState, SearchParams } from '../types';
 
 const initialFilter: FilterState = {
   topics: [],
@@ -26,9 +26,12 @@ const initialState: NewsState = {
   articles: [],
   summaries: {},
   bookmarkedIds: [],
+  saved: [],
+  recentSearches: [],
   filter: initialFilter,
   pagination: initialPagination,
   isLoading: false,
+  loading: false,
   error: null,
   lastFetch: null,
 };
@@ -72,25 +75,50 @@ const newsSlice = createSlice({
     },
     setLoading(state, action: PayloadAction<boolean>) {
       state.isLoading = action.payload;
+      state.loading = action.payload;
     },
     setError(state, action: PayloadAction<string | null>) {
       state.error = action.payload;
+    },
+    clearFeed(state) {
+      state.articles = [];
+      state.pagination = { ...initialPagination };
+      state.lastFetch = null;
+    },
+    saveArticle(state, action: PayloadAction<Article>) {
+      const exists = state.saved.some((article) => article.id === action.payload.id);
+      if (!exists) {
+        state.saved.push(action.payload);
+      }
+      if (!state.bookmarkedIds.includes(action.payload.id)) {
+        state.bookmarkedIds.push(action.payload.id);
+      }
+    },
+    removeSavedArticle(state, action: PayloadAction<string>) {
+      state.saved = state.saved.filter((article) => article.id !== action.payload);
+      state.bookmarkedIds = state.bookmarkedIds.filter((id) => id !== action.payload);
+    },
+    setRecentSearches(state, action: PayloadAction<string[]>) {
+      state.recentSearches = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchNews.pending, (state) => {
         state.isLoading = true;
+        state.loading = true;
         state.error = null;
       })
       .addCase(fetchNews.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.loading = false;
         state.articles = action.payload.articles;
         state.pagination = action.payload.pagination;
         state.lastFetch = Date.now();
       })
       .addCase(fetchNews.rejected, (state, action) => {
         state.isLoading = false;
+        state.loading = false;
         state.error = action.error.message || 'Unable to fetch news';
       })
       .addCase(fetchArticleDetail.fulfilled, (state, action) => {
@@ -148,5 +176,12 @@ export const {
   setPage,
   setLoading,
   setError,
+  clearFeed,
+  saveArticle,
+  removeSavedArticle,
+  setRecentSearches,
 } = newsSlice.actions;
+
+export { fetchNews as fetchFeed, searchNews };
+export type { Article, FetchFeedParams, SearchParams, NewsState };
 export default newsSlice.reducer;

@@ -6,6 +6,9 @@ const initialState: PreferencesState = {
   topics: [],
   regions: [],
   languages: [],
+  digestTime: '08:00',
+  notificationsEnabled: true,
+  emailEnabled: true,
   notificationEnabled: true,
   notificationTime: '08:00',
   summaryLength: 'MEDIUM',
@@ -30,8 +33,33 @@ const preferencesSlice = createSlice({
     updateLanguages(state, action: PayloadAction<string[]>) {
       state.languages = action.payload;
     },
+    setTopics(state, action: PayloadAction<string[]>) {
+      state.topics = action.payload;
+    },
+    updateRegions(state, action: PayloadAction<string[]>) {
+      state.regions = action.payload;
+    },
+    updateLanguages(state, action: PayloadAction<string[]>) {
+      state.languages = action.payload;
+    },
     setNotificationTime(state, action: PayloadAction<string>) {
       state.notificationTime = action.payload;
+    },
+    setDigestTime(state, action: PayloadAction<string>) {
+      state.digestTime = action.payload;
+    },
+    setEmailFrequency(state, action: PayloadAction<PreferencesState['emailFrequency']>) {
+      state.emailFrequency = action.payload;
+    },
+    setSummaryLength(state, action: PayloadAction<PreferencesState['summaryLength']>) {
+      state.summaryLength = action.payload;
+    },
+    toggleNotifications(state, action: PayloadAction<boolean | undefined>) {
+      state.notificationsEnabled = action.payload ?? !state.notificationsEnabled;
+      state.notificationEnabled = state.notificationsEnabled;
+    },
+    toggleEmail(state, action: PayloadAction<boolean | undefined>) {
+      state.emailEnabled = action.payload ?? !state.emailEnabled;
     },
     setLoading(state, action: PayloadAction<boolean>) {
       state.isLoading = action.payload;
@@ -78,8 +106,17 @@ export const {
   updateTopics,
   updateRegions,
   updateLanguages,
+  setTopics,
+  setRegions,
+  setLanguages,
+  setDigestTime,
+  setEmailFrequency,
+  setSummaryLength,
+  toggleNotifications,
+  toggleEmail,
   setNotificationTime,
   setLoading,
   setError,
 } = preferencesSlice.actions;
+export type { PreferencesState };
 export default preferencesSlice.reducer;
