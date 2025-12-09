@@ -7,7 +7,7 @@ import { formatDate } from '../utils/date';
 import SummaryActions from '../components/summary/SummaryActions';
 
 const ArticleDetail = () => {
-  const { article_id } = useLocalSearchParams<{ article_id: string }>();
+  const { article_id } = useLocalSearchParams() as { article_id?: string };
   const article = useAppSelector((state) => state.news.articles.find((item) => item.id === article_id));
 
   if (!article) {

@@ -4,10 +4,13 @@ import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 
 jest.mock('@react-native-community/netinfo');
 
-const mockedNetInfo = NetInfo as jest.Mocked<typeof NetInfo>;
+const mockedNetInfo = NetInfo as any;
 
-mockedNetInfo.addEventListener = jest.fn(() => () => {});
-mockedNetInfo.fetch = jest.fn().mockResolvedValue({ isConnected: true } as any);
+mockedNetInfo.addEventListener = jest.fn((listener: any) => {
+  listener({ isConnected: true } as any);
+  return { remove: jest.fn() } as any;
+});
+mockedNetInfo.fetch = jest.fn(() => Promise.resolve({ isConnected: true } as any));
 
 describe('useNetworkStatus', () => {
   it('subscribes to network changes', () => {

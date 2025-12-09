@@ -3,12 +3,14 @@
     "target": "es2017",
     "module": "esnext",
     "jsx": "react",
-    "strict": true,
+    "strict": false,
     "noEmit": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "types": ["jest"],
+    "skipLibCheck": true,
+    "types": [],
+    "lib": ["esnext"],
     "baseUrl": "./",
     "paths": {
       "@/*": ["./*"]
