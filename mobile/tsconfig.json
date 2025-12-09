@@ -10,12 +10,23 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "types": [],
-    "lib": ["esnext"],
+    "lib": [
+      "esnext"
+    ],
     "baseUrl": "./",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     }
   },
-  "include": ["./**/*.ts", "./**/*.tsx"],
-  "exclude": ["node_modules", "babel.config.js"]
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "babel.config.js"
+  ],
+  "extends": "expo/tsconfig.base"
 }
