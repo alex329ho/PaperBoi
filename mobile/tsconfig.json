@@ -8,7 +8,7 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "types": ["jest", "react-native"],
+    "types": ["jest"],
     "baseUrl": "./",
     "paths": {
       "@/*": ["./*"]
