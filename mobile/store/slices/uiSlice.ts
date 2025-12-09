@@ -1,35 +1,36 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-export type UIState = {
-  loadingMessage?: string;
-  errorMessage?: string;
-  theme: 'light' | 'dark';
-};
+import { Toast, UIState } from '../types';
 
 const initialState: UIState = {
-  loadingMessage: undefined,
-  errorMessage: undefined,
   theme: 'light',
+  isOffline: false,
+  toasts: [],
+  networkStatus: 'online',
 };
 
 const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    showLoading(state, action: PayloadAction<string | undefined>) {
-      state.loadingMessage = action.payload;
-    },
-    hideLoading(state) {
-      state.loadingMessage = undefined;
-    },
-    setError(state, action: PayloadAction<string | undefined>) {
-      state.errorMessage = action.payload;
-    },
     setTheme(state, action: PayloadAction<'light' | 'dark'>) {
       state.theme = action.payload;
+    },
+    setOfflineStatus(state, action: PayloadAction<boolean>) {
+      state.isOffline = action.payload;
+      state.networkStatus = action.payload ? 'offline' : 'online';
+    },
+    addToast(state, action: PayloadAction<Toast>) {
+      state.toasts.push(action.payload);
+    },
+    removeToast(state, action: PayloadAction<string>) {
+      state.toasts = state.toasts.filter((toast) => toast.id !== action.payload);
+    },
+    setNetwork(state, action: PayloadAction<UIState['networkStatus']>) {
+      state.networkStatus = action.payload;
+      state.isOffline = action.payload === 'offline';
     },
   },
 });
 
-export const { showLoading, hideLoading, setError, setTheme } = uiSlice.actions;
+export const { setTheme, setOfflineStatus, addToast, removeToast, setNetwork } = uiSlice.actions;
 export default uiSlice.reducer;

@@ -1,12 +1,37 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PersistConfig } from 'redux-persist';
-import { RootState } from './store';
+import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
+import { createTransform } from 'redux-persist';
+import { PersistConfig } from 'redux-persist/es/types';
+import { RootState } from './types';
 
-const persistConfig: any = {
+const stripTransientState = createTransform(
+  (inboundState: any) => {
+    if (!inboundState) return inboundState;
+    // Remove transient flags such as loading and error before persisting
+    const { isLoading, error, ...rest } = inboundState;
+    return rest;
+  },
+  null,
+  { whitelist: ['auth', 'news', 'preferences', 'sync'] },
+);
+
+const persistConfig: PersistConfig<RootState> = {
   key: 'paperboi-root',
   storage: AsyncStorage,
-  whitelist: ['auth', 'preferences', 'settings'],
-  timeout: 0,
+  version: 1,
+  whitelist: ['auth', 'news', 'preferences', 'sync'],
+  blacklist: ['ui'],
+  stateReconciler: autoMergeLevel2,
+  transforms: [stripTransientState],
+  migrate: async (persistedState, currentVersion) => {
+    if (!persistedState) return persistedState as RootState | undefined;
+    if ((persistedState as any)._persist?.version !== currentVersion) {
+      // Clear transient caches on version bump to avoid stale data
+      await AsyncStorage.removeItem('paperboi_bookmarks');
+      await AsyncStorage.removeItem('paperboi_bookmarked_articles');
+    }
+    return persistedState as RootState;
+  },
 };
 
 export default persistConfig;
