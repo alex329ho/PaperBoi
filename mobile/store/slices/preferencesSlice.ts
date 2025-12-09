@@ -1,66 +1,85 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-export type PreferencesState = {
-  topics: string[];
-  regions: string[];
-  languages: string[];
-  digestTime?: string;
-  notificationsEnabled: boolean;
-  emailEnabled: boolean;
-  emailFrequency: 'daily' | 'weekly' | 'monthly';
-  summaryLength: 'short' | 'medium' | 'long';
-};
+import { fetchPreferences, savePreferencesLocally, updatePreferences } from '../thunks/preferencesThunks';
+import { PreferencesState } from '../types';
 
 const initialState: PreferencesState = {
   topics: [],
   regions: [],
   languages: [],
-  digestTime: undefined,
-  notificationsEnabled: true,
-  emailEnabled: false,
+  notificationEnabled: true,
+  notificationTime: '08:00',
+  summaryLength: 'MEDIUM',
   emailFrequency: 'weekly',
-  summaryLength: 'medium',
+  isLoading: false,
+  error: null,
 };
 
 const preferencesSlice = createSlice({
   name: 'preferences',
   initialState,
   reducers: {
-    setTopics(state, action: PayloadAction<string[]>) {
+    setPreferences(state, action: PayloadAction<PreferencesState>) {
+      return { ...state, ...action.payload };
+    },
+    updateTopics(state, action: PayloadAction<string[]>) {
       state.topics = action.payload;
     },
-    setRegions(state, action: PayloadAction<string[]>) {
+    updateRegions(state, action: PayloadAction<string[]>) {
       state.regions = action.payload;
     },
-    setLanguages(state, action: PayloadAction<string[]>) {
+    updateLanguages(state, action: PayloadAction<string[]>) {
       state.languages = action.payload;
     },
-    setDigestTime(state, action: PayloadAction<string | undefined>) {
-      state.digestTime = action.payload;
+    setNotificationTime(state, action: PayloadAction<string>) {
+      state.notificationTime = action.payload;
     },
-    toggleNotifications(state, action: PayloadAction<boolean | undefined>) {
-      state.notificationsEnabled = action.payload ?? !state.notificationsEnabled;
+    setLoading(state, action: PayloadAction<boolean>) {
+      state.isLoading = action.payload;
     },
-    toggleEmail(state, action: PayloadAction<boolean | undefined>) {
-      state.emailEnabled = action.payload ?? !state.emailEnabled;
+    setError(state, action: PayloadAction<string | null>) {
+      state.error = action.payload;
     },
-    setEmailFrequency(state, action: PayloadAction<PreferencesState['emailFrequency']>) {
-      state.emailFrequency = action.payload;
-    },
-    setSummaryLength(state, action: PayloadAction<PreferencesState['summaryLength']>) {
-      state.summaryLength = action.payload;
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchPreferences.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchPreferences.fulfilled, (state, action) => {
+        return { ...state, ...action.payload, isLoading: false };
+      })
+      .addCase(fetchPreferences.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || 'Unable to load preferences';
+      })
+      .addCase(updatePreferences.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updatePreferences.fulfilled, (state, action) => {
+        return { ...state, ...action.payload, isLoading: false };
+      })
+      .addCase(updatePreferences.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || 'Unable to update preferences';
+      })
+      .addCase(savePreferencesLocally.fulfilled, (state, action) => {
+        return { ...state, ...action.payload };
+      })
+      .addCase(savePreferencesLocally.rejected, (state, action) => {
+        state.error = action.error.message || 'Unable to save preferences locally';
+      });
   },
 });
 
 export const {
-  setTopics,
-  setRegions,
-  setLanguages,
-  setDigestTime,
-  toggleNotifications,
-  toggleEmail,
-  setEmailFrequency,
-  setSummaryLength,
+  setPreferences,
+  updateTopics,
+  updateRegions,
+  updateLanguages,
+  setNotificationTime,
+  setLoading,
+  setError,
 } = preferencesSlice.actions;
 export default preferencesSlice.reducer;

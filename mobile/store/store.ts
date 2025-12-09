@@ -1,20 +1,21 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
-import persistConfig from './persistConfig';
+import analyticsMiddleware from './middleware/analyticsMiddleware';
+import syncMiddleware from './middleware/syncMiddleware';
 import authReducer from './slices/authSlice';
 import newsReducer from './slices/newsSlice';
 import preferencesReducer from './slices/preferencesSlice';
+import syncReducer from './slices/syncSlice';
 import uiReducer from './slices/uiSlice';
-import settingsReducer from './slices/settingsSlice';
-import analyticsMiddleware from './middleware/analyticsMiddleware';
-import errorMiddleware from './middleware/errorMiddleware';
+import persistConfig from './persistConfig';
+import { RootState } from './types';
 
-const rootReducer = combineReducers({
+const rootReducer = combineReducers<RootState>({
   auth: authReducer,
   news: newsReducer,
   preferences: preferencesReducer,
   ui: uiReducer,
-  settings: settingsReducer,
+  sync: syncReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -24,11 +25,19 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(analyticsMiddleware, errorMiddleware),
+      thunk: true,
+    })
+      .prepend(syncMiddleware)
+      .concat(analyticsMiddleware),
   devTools: process.env.NODE_ENV !== 'production',
 });
 
 export const persistor = persistStore(store);
 
-export type RootState = ReturnType<typeof rootReducer>;
 export type AppDispatch = typeof store.dispatch;
+export type AppStore = typeof store;
+export type StoreRootState = ReturnType<typeof store.getState>;
+export type StoreDispatch = typeof store.dispatch;
+export type StoreGetState = typeof store.getState;
+
+export default store;

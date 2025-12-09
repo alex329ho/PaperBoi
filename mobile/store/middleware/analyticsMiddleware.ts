@@ -1,15 +1,11 @@
-import { AnyAction, Middleware } from '@reduxjs/toolkit';
-import * as Notifications from 'expo-notifications';
-import { toggleAnalytics } from '../slices/settingsSlice';
+import { Middleware } from '@reduxjs/toolkit';
 
-const analyticsMiddleware: Middleware = (storeAPI) => (next) => async (action: AnyAction) => {
+const analyticsMiddleware: Middleware = () => (next) => (action) => {
+  const start = Date.now();
   const result = next(action);
-  const state = storeAPI.getState();
-
-  if (action.type === toggleAnalytics.type && !state.settings.analyticsEnabled) {
-    await Notifications.setBadgeCountAsync(0);
-  }
-
+  const duration = Date.now() - start;
+  // Lightweight analytics hook for future integrations
+  console.debug(`[analytics] action=${action.type} duration=${duration}ms`);
   return result;
 };
 
