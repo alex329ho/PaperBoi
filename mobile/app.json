@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "PaperBoi",
+    "slug": "paperboi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.paperboi.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "app.paperboi.mobile"
+    },
+    "plugins": [
+      ["expo-build-properties", { "android": { "usesCleartextTraffic": false } }],
+      "expo-notifications",
+      ["expo-secure-store", { "faceIDPermission": "Allow PaperBoi to access secure data." }],
+      "expo-router"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "paperboi-mobile"
+      },
+      "apiBaseUrl": "${EXPO_PUBLIC_API_BASE_URL}",
+      "firebaseApiKey": "${EXPO_PUBLIC_FIREBASE_API_KEY}",
+      "firebaseProjectId": "${EXPO_PUBLIC_FIREBASE_PROJECT_ID}",
+      "appVersion": "${EXPO_PUBLIC_APP_VERSION}",
+      "apiTimeout": "${EXPO_PUBLIC_API_TIMEOUT}"
+    }
+  }
+}
