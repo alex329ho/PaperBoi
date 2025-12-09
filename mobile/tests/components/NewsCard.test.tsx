@@ -7,8 +7,13 @@ const article: Article = {
   id: '1',
   title: 'Sample article',
   summary: 'Summary',
+  content: 'Content',
+  topic: 'Tech',
+  region: 'US',
+  language: 'en',
   source: 'PaperBoi',
   publishedAt: new Date().toISOString(),
+  createdAt: new Date().toISOString(),
 };
 
 describe('NewsCard', () => {
@@ -17,7 +22,8 @@ describe('NewsCard', () => {
       <NewsCard
         article={article}
         onPress={() => {}}
-        onSave={() => {}}
+        onBookmark={() => {}}
+        onShare={() => {}}
       />
     );
 

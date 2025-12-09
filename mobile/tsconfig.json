@@ -11,7 +11,8 @@
     "skipLibCheck": true,
     "types": [],
     "lib": [
-      "esnext"
+      "esnext",
+      "dom"
     ],
     "baseUrl": "./",
     "paths": {
@@ -27,6 +28,5 @@
   "exclude": [
     "node_modules",
     "babel.config.js"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }

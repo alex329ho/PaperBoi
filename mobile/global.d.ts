@@ -11,6 +11,9 @@ declare module 'src/types' {
 declare namespace React {
   type ReactNode = any;
   type PropsWithChildren<P = any> = P & { children?: ReactNode };
+  type ReactElement = any;
+  type Dispatch<A> = (value: A) => void;
+  type SetStateAction<S> = S | ((prevState: S) => S);
   interface FC<P = {}> {
     (props: PropsWithChildren<P>): any;
   }
@@ -21,7 +24,7 @@ declare namespace React {
     setState(state: Partial<S>): void;
     render(): any;
   }
-  function useState<T = any>(initial?: T): [T, (value: T) => void];
+  function useState<T = any>(initial?: T): [T, Dispatch<SetStateAction<T>>];
   function useEffect(effect: (...args: any[]) => any, deps?: any[]): void;
   function useMemo<T>(factory: () => T, deps?: any[]): T;
   function useCallback<T extends (...args: any[]) => any>(callback: T, deps?: any[]): T;
@@ -35,7 +38,10 @@ declare module 'react' {
   export const useCallback: typeof React.useCallback;
   export type FC<P = {}> = React.FC<P>;
   export type ReactNode = React.ReactNode;
+  export type ReactElement = React.ReactElement;
   export type PropsWithChildren<P = any> = React.PropsWithChildren<P>;
+  export type Dispatch<A> = React.Dispatch<A>;
+  export type SetStateAction<S> = React.SetStateAction<S>;
   export class Component<P = {}, S = {}> extends React.Component<P, S> {}
 }
 
@@ -67,7 +73,6 @@ declare const process: {
 declare module 'react';
 declare module 'react-native';
 declare module 'react-native-paper';
-declare module 'react-redux';
 declare module 'expo-router';
 declare module 'expo';
 declare module 'expo-constants';
@@ -79,12 +84,24 @@ declare module '@testing-library/react-native';
 declare module 'expo-splash-screen';
 declare module 'expo-font';
 declare module 'redux-persist/integration/react';
+declare module 'expo-web-browser';
 
 declare function require(path: string): any;
 declare function setTimeout(handler: (...args: any[]) => void, timeout?: number, ...args: any[]): any;
 declare function clearTimeout(handle?: any): void;
 declare module 'react-native-safe-area-context';
 declare module 'redux-persist';
+declare module 'redux-persist/lib/stateReconciler/autoMergeLevel2';
+declare module 'redux-persist/es/types';
+declare module 'reselect';
+
+declare module 'react-redux' {
+  export type TypedUseSelectorHook<TState> = <TSelected>(selector: (state: TState) => TSelected) => TSelected;
+  export function useDispatch<T = any>(): T;
+  export function useSelector<TSelected>(selector: (state: any) => TSelected): TSelected;
+  export const Provider: React.FC<{ store: any; children?: React.ReactNode }>;
+}
+
 declare module '@reduxjs/toolkit' {
   export type PayloadAction<T = any> = { type: string; payload: T };
   export type AnyAction = PayloadAction<any>;
@@ -92,7 +109,17 @@ declare module '@reduxjs/toolkit' {
   export function createSlice(options: any): any;
   export function configureStore(options: any): any;
   export function combineReducers(reducers: any): any;
-  export function createAsyncThunk(type: string, payloadCreator: any): any;
+  export function createAsyncThunk<Returned, ThunkArg = void, ThunkApiConfig extends { state?: unknown } = {}>(
+    typePrefix: string,
+    payloadCreator: (
+      arg: ThunkArg,
+      thunkApi: {
+        dispatch: any;
+        getState: () => ThunkApiConfig['state'];
+        rejectWithValue: (value: any) => any;
+      },
+    ) => Promise<Returned> | Returned,
+  ): any;
 }
 declare module '@reduxjs/toolkit/query';
 declare module '@reduxjs/toolkit/query/react';

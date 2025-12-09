@@ -21,7 +21,11 @@ const SearchScreen = () => {
   useEffect(() => {
     const handler = setTimeout(() => {
       if (query.trim()) {
-        executeSearch({ query, page: 1, filters: { topics: selectedTopics, regions: selectedRegions, languages: selectedLanguages } });
+        executeSearch({
+          query,
+          page: 1,
+          filter: { topics: selectedTopics, regions: selectedRegions, languages: selectedLanguages, sortBy: 'recent' },
+        });
       }
     }, 400);
     return () => clearTimeout(handler);
@@ -33,7 +37,11 @@ const SearchScreen = () => {
 
   const handleSubmit = () => {
     if (!query) return;
-    executeSearch({ query, page: 1, filters: { topics: selectedTopics, regions: selectedRegions, languages: selectedLanguages } });
+    executeSearch({
+      query,
+      page: 1,
+      filter: { topics: selectedTopics, regions: selectedRegions, languages: selectedLanguages, sortBy: 'recent' },
+    });
     saveRecent([query, ...search.recent.filter((item) => item !== query)].slice(0, 10));
   };
 
