@@ -54,6 +54,32 @@ assets/                       # Images and fonts
    npm run ios
    ```
 
+### macOS simulator prerequisites
+If `npx expo start --ios` fails with `xcrun simctl help exited with non-zero code: 72`, the Xcode tools the simulator depends on are missing or misconfigured. Fix it with the following steps (in order):
+
+1. **Install Xcode Command Line Tools** so `simctl` is available:
+   ```bash
+   xcode-select --install
+   ```
+
+2. **Point to the correct Developer folder** (sometimes CLT installs but `xcrun` still looks in the wrong place):
+   ```bash
+   sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+   ```
+
+3. **Accept Xcode’s license** (otherwise `xcrun` can exit with code 72):
+   ```bash
+   sudo xcodebuild -license accept
+   ```
+
+4. **Verify `simctl` works**, then rerun Expo:
+   ```bash
+   xcrun simctl list devices
+   npx expo start --ios
+   ```
+
+If you still see the error, open the Xcode app once to finish setup, then repeat step 4.
+
 4. **Type checking & linting**
    ```bash
    npm run typecheck
