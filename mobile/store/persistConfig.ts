@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import { createTransform } from 'redux-persist';
-import { PersistConfig } from 'redux-persist/es/types';
 import type { RootState } from './store';
 
 const stripTransientState = createTransform(
@@ -15,7 +14,7 @@ const stripTransientState = createTransform(
   { whitelist: ['auth', 'news', 'preferences', 'sync'] },
 );
 
-const persistConfig: PersistConfig<any> = {
+const persistConfig = {
   key: 'paperboi-root',
   storage: AsyncStorage,
   version: 1,

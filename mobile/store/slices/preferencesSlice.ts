@@ -36,10 +36,10 @@ const preferencesSlice = createSlice({
     setTopics(state, action: PayloadAction<string[]>) {
       state.topics = action.payload;
     },
-    updateRegions(state, action: PayloadAction<string[]>) {
+    setRegions(state, action: PayloadAction<string[]>) {
       state.regions = action.payload;
     },
-    updateLanguages(state, action: PayloadAction<string[]>) {
+    setLanguages(state, action: PayloadAction<string[]>) {
       state.languages = action.payload;
     },
     setNotificationTime(state, action: PayloadAction<string>) {
