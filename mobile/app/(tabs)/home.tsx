@@ -1,30 +1,66 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { View } from 'react-native';
+import { Button, Chip, Text, useTheme } from 'react-native-paper';
 import NewsList from '../../components/news/NewsList';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import { loadTopStories, saveArticle } from '../../store/slices/newsSlice';
+import LoadingSkeletons from '../../components/common/LoadingSkeletons';
+import { useNews } from '../../hooks/useNews';
 
 const HomeScreen = () => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { articles, loading } = useAppSelector((state) => state.news);
+  const { colors } = useTheme();
+  const { feed, saved, loadMoreFeed, refreshFeed, offline, toggleBookmark, shareArticle } = useNews();
 
-  useEffect(() => {
-    dispatch(loadTopStories());
-  }, [dispatch]);
+  const openArticle = (articleId: string) => router.push({ pathname: '/[article_id]', params: { article_id: articleId } });
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      {loading ? (
-        <LoadingSpinner />
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text variant="titleLarge">PaperBoi</Text>
+        <Button icon="cog" onPress={() => router.push('/(tabs)/settings')} accessibilityLabel="Open settings">
+          Settings
+        </Button>
+      </View>
+      <View style={{ paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+        <Chip icon="tag" compact>
+          Technology
+        </Chip>
+        <Chip icon="earth" compact>
+          US
+        </Chip>
+        <Chip mode="outlined" onPress={() => router.push('/(tabs)/search')}>
+          More
+        </Chip>
+      </View>
+      {offline ? (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+          <Text style={{ color: colors.error }}>Offline mode: showing cached content.</Text>
+        </View>
+      ) : null}
+      {feed.error ? (
+        <View style={{ padding: 16 }}>
+          <Text accessibilityRole="alert">{feed.error}</Text>
+          <Button onPress={refreshFeed} mode="contained" style={{ marginTop: 8 }}>
+            Retry
+          </Button>
+        </View>
+      ) : null}
+      {feed.loading && !feed.items.length ? (
+        <LoadingSkeletons />
       ) : (
         <NewsList
-          articles={articles}
-          loading={loading}
-          onSelect={(article) => router.push({ pathname: '/[article_id]', params: { article_id: article.id } })}
-          onSave={(article) => dispatch(saveArticle(article))}
+          articles={feed.items}
+          loading={feed.loading}
+          refreshing={feed.refreshing}
+          onRefresh={refreshFeed}
+          onSelect={(article) => openArticle(article.id)}
+          onBookmark={toggleBookmark}
+          onShare={shareArticle}
+          loadMore={loadMoreFeed}
+          hasNextPage={feed.hasNextPage}
+          savedIds={saved.map((item) => item.id)}
+          emptyLabel="No articles yet. Pull to refresh to fetch the latest headlines."
         />
       )}
     </SafeAreaView>
