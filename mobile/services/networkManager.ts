@@ -1,7 +1,25 @@
-import { EventEmitter } from 'events';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { AxiosInstance } from 'axios';
 import { EnhancedAxiosRequestConfig } from '../types/api';
+
+class SimpleEventEmitter {
+  private listeners: Record<string, Array<(...args: any[]) => void>> = {};
+
+  on(event: string, listener: (...args: any[]) => void) {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(listener);
+  }
+
+  removeListener(event: string, listener: (...args: any[]) => void) {
+    this.listeners[event] = (this.listeners[event] || []).filter((cb) => cb !== listener);
+  }
+
+  emit(event: string, ...args: any[]) {
+    (this.listeners[event] || []).forEach((listener) => listener(...args));
+  }
+}
 
 interface QueuedRequest {
   config: EnhancedAxiosRequestConfig;
@@ -14,7 +32,7 @@ class NetworkManager {
   private status: NetInfoState | null = null;
   private queue: QueuedRequest[] = [];
   private dedupeMap = new Map<string, Promise<EnhancedAxiosRequestConfig>>();
-  private emitter = new EventEmitter();
+  private emitter = new SimpleEventEmitter();
   private client: AxiosInstance | null = null;
 
   constructor() {

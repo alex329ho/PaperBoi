@@ -28,6 +28,5 @@
   "exclude": [
     "node_modules",
     "babel.config.js"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }
