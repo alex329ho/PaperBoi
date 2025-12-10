@@ -1,0 +1,118 @@
+import { EventEmitter } from 'events';
+import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import { AxiosInstance } from 'axios';
+import { EnhancedAxiosRequestConfig } from '../types/api';
+
+interface QueuedRequest {
+  config: EnhancedAxiosRequestConfig;
+  resolve: (config: EnhancedAxiosRequestConfig) => void;
+  reject: (reason?: unknown) => void;
+  dedupeKey?: string;
+}
+
+class NetworkManager {
+  private status: NetInfoState | null = null;
+  private queue: QueuedRequest[] = [];
+  private dedupeMap = new Map<string, Promise<EnhancedAxiosRequestConfig>>();
+  private emitter = new EventEmitter();
+  private client: AxiosInstance | null = null;
+
+  constructor() {
+    NetInfo.addEventListener((state) => {
+      this.status = state;
+      this.emitter.emit('change', state);
+      if (this.isConsideredOnline(state)) {
+        this.flushQueue();
+      }
+    });
+
+    void NetInfo.fetch().then((state) => {
+      this.status = state;
+    });
+  }
+
+  registerClient(client: AxiosInstance) {
+    this.client = client;
+  }
+
+  async isOnline(): Promise<boolean> {
+    if (this.status) {
+      return this.isConsideredOnline(this.status);
+    }
+    const current = await NetInfo.fetch();
+    this.status = current;
+    return this.isConsideredOnline(current);
+  }
+
+  getStatus(): NetInfoState | null {
+    return this.status;
+  }
+
+  onStatusChange(listener: (state: NetInfoState) => void) {
+    this.emitter.on('change', listener);
+    return () => this.emitter.removeListener('change', listener);
+  }
+
+  enqueue(config: EnhancedAxiosRequestConfig): Promise<EnhancedAxiosRequestConfig> {
+    const dedupeKey = config.meta?.dedupeKey;
+    if (dedupeKey && config.allowDeduplication !== false) {
+      const existing = this.dedupeMap.get(dedupeKey);
+      if (existing) {
+        return existing;
+      }
+    }
+
+    const promise = new Promise<EnhancedAxiosRequestConfig>((resolve, reject) => {
+      this.queue.push({ config, resolve, reject, dedupeKey });
+    });
+
+    if (dedupeKey && config.allowDeduplication !== false) {
+      this.dedupeMap.set(dedupeKey, promise);
+    }
+
+    return promise;
+  }
+
+  flushQueue() {
+    const pending = [...this.queue];
+    this.queue = [];
+    pending.forEach(({ config, resolve, dedupeKey }) => {
+      if (dedupeKey) {
+        this.dedupeMap.delete(dedupeKey);
+      }
+      resolve({ ...config });
+    });
+  }
+
+  async flushQueueImmediately() {
+    if (!this.client) {
+      return;
+    }
+    const pending = [...this.queue];
+    this.queue = [];
+
+    await Promise.all(
+      pending.map(async ({ config, reject, dedupeKey }) => {
+        try {
+          if (dedupeKey) {
+            this.dedupeMap.delete(dedupeKey);
+          }
+          await this.client?.(config);
+        } catch (error) {
+          reject(error);
+        }
+      })
+    );
+  }
+
+  getQueueSize() {
+    return this.queue.length;
+  }
+
+  private isConsideredOnline(state: NetInfoState) {
+    return state.isConnected === true && state.isInternetReachable !== false;
+  }
+}
+
+const networkManager = new NetworkManager();
+export default networkManager;
