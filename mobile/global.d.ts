@@ -28,6 +28,7 @@ declare namespace React {
   function useEffect(effect: (...args: any[]) => any, deps?: any[]): void;
   function useMemo<T>(factory: () => T, deps?: any[]): T;
   function useCallback<T extends (...args: any[]) => any>(callback: T, deps?: any[]): T;
+  function useRef<T = any>(initial?: T): { current: T };
 }
 
 declare module 'react' {
@@ -36,6 +37,7 @@ declare module 'react' {
   export const useEffect: typeof React.useEffect;
   export const useMemo: typeof React.useMemo;
   export const useCallback: typeof React.useCallback;
+  export const useRef: typeof React.useRef;
   export type FC<P = {}> = React.FC<P>;
   export type ReactNode = React.ReactNode;
   export type ReactElement = React.ReactElement;
@@ -45,15 +47,29 @@ declare module 'react' {
   export class Component<P = {}, S = {}> extends React.Component<P, S> {}
 }
 
+type JestMockFn = ((...args: any[]) => any) & {
+  mockResolvedValue?: (...args: any[]) => any;
+  mockRejectedValue?: (...args: any[]) => any;
+  mockReturnValue?: (...args: any[]) => any;
+  mockReturnValueOnce?: (...args: any[]) => any;
+  mockClear?: () => void;
+  mockImplementation?: (...args: any[]) => any;
+};
+
 declare const jest: {
-  fn<T extends (...args: any[]) => any>(implementation?: T): T;
+  fn<T extends (...args: any[]) => any>(implementation?: T): JestMockFn & T;
   mock(moduleName: string, factory?: any): void;
   Mocked<T>(item: T): jest.Mocked<T>;
   requireActual(moduleName: string): any;
+  clearAllMocks(): void;
 };
 declare function describe(name: string, fn: () => void): void;
 declare function it(name: string, fn: () => any): void;
 declare function expect(actual: any): any;
+declare function beforeEach(fn: () => any | Promise<any>): void;
+declare function afterEach(fn: () => any | Promise<any>): void;
+declare function beforeAll(fn: () => any | Promise<any>): void;
+declare function afterAll(fn: () => any | Promise<any>): void;
 
 declare namespace jest {
   type Mocked<T> = T & { [K in keyof T]: any };
@@ -70,6 +86,9 @@ declare const process: {
   env: ProcessEnv;
 };
 
+declare const global: any;
+declare const __DEV__: boolean;
+
 declare module 'react';
 declare module 'react-native';
 declare module 'react-native-paper';
@@ -78,7 +97,6 @@ declare module 'expo';
 declare module 'expo-constants';
 declare module 'expo-notifications';
 declare module 'expo-secure-store';
-declare module '@react-native-community/netinfo';
 declare module '@react-native-async-storage/async-storage';
 declare module '@testing-library/react-native';
 declare module 'expo-splash-screen';
@@ -124,5 +142,82 @@ declare module '@reduxjs/toolkit' {
 declare module '@reduxjs/toolkit/query';
 declare module '@reduxjs/toolkit/query/react';
 declare module 'redux-persist/lib/storage';
-declare module 'axios';
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    url?: string;
+    method?: string;
+    headers?: Record<string, any>;
+    params?: any;
+    data?: any;
+    timeout?: number;
+    [key: string]: any;
+  }
+
+  export interface AxiosResponse<T = any> {
+    data: T;
+    status: number;
+    statusText?: string;
+    headers?: Record<string, any>;
+    config: AxiosRequestConfig;
+  }
+
+  export interface AxiosError<T = any> extends Error {
+    config: AxiosRequestConfig;
+    response?: AxiosResponse<T>;
+    isAxiosError: boolean;
+    code?: string;
+    name?: string;
+  }
+
+  export interface AxiosInstance {
+    (config: AxiosRequestConfig): Promise<any>;
+    get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>;
+    post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
+    put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
+    interceptors: {
+      request: { use: (...args: any[]) => any };
+      response: { use: (...args: any[]) => any };
+    };
+    defaults: AxiosRequestConfig;
+  }
+
+  const axios: {
+    create(config?: AxiosRequestConfig): AxiosInstance;
+  };
+
+  export default axios;
+}
 declare module '@expo/vector-icons';
+
+declare module '@react-native-community/netinfo' {
+  export interface NetInfoState {
+    type?: string;
+    isConnected?: boolean;
+    isInternetReachable?: boolean | null;
+    details?: Record<string, any>;
+  }
+
+  export type NetInfoSubscription = { unsubscribe: () => void };
+
+  export const fetch: () => Promise<NetInfoState>;
+  export const addEventListener: (listener: (state: NetInfoState) => void) => NetInfoSubscription;
+}
+
+declare module 'firebase/app' {
+  export type FirebaseApp = any;
+  export function initializeApp(config: any): FirebaseApp;
+  export function getApps(): FirebaseApp[];
+}
+
+declare module 'firebase/messaging' {
+  export type Messaging = any;
+  export function getMessaging(app?: any): Messaging;
+  export function getToken(messaging: Messaging, options?: any): Promise<string | null>;
+  export function onMessage(messaging: Messaging, handler: (payload: any) => any): any;
+  export function onTokenRefresh(messaging: Messaging, handler: (token: string) => any): any;
+}
+
+declare const Buffer: {
+  from(input: string, encoding?: string): { toString: (encoding?: string) => string };
+  byteLength: (value: string, encoding?: string) => number;
+};

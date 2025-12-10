@@ -28,7 +28,7 @@ export const useOfflineSync = () => {
     void (async () => {
       setLastSync(await storageService.getLastSync());
     })();
-    return () => subscription();
+    return () => subscription.unsubscribe();
   }, [triggerSync]);
 
   return { isSyncing, lastSync, triggerSync, isOnline };
