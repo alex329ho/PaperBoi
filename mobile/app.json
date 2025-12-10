@@ -26,8 +26,6 @@
     "plugins": [
       ["expo-build-properties", { "android": { "usesCleartextTraffic": false } }],
       "expo-notifications",
-      "expo-file-system",
-      "@react-native-firebase/app",
       ["expo-secure-store", { "faceIDPermission": "Allow PaperBoi to access secure data." }],
       "expo-router"
     ],

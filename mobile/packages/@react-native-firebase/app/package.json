@@ -1,9 +1,0 @@
-{
-  "name": "@react-native-firebase/app",
-  "version": "0.0.0-local",
-  "description": "Local stub for Expo config plugin resolution",
-  "main": "index.js",
-  "expo": {
-    "plugin": "./app.plugin.js"
-  }
-}
