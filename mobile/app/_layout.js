@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { Provider } from 'react-redux';
@@ -6,7 +7,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { PaperProvider } from 'react-native-paper';
 import { useFonts } from 'expo-font';
 import { store, persistor } from '../store/store';
-import ErrorBoundary from '../components/common/ErrorBoundary';
+import AppErrorBoundary from '../components/common/ErrorBoundary';
 import OfflineBanner from '../components/common/OfflineBanner';
 import ToastNotification from '../components/common/ToastNotification';
 import { useAppSelector } from '../hooks/useRedux';
@@ -14,20 +15,41 @@ import { useTheme } from '../hooks/useTheme';
 
 SplashScreen.preventAutoHideAsync();
 
-const RootProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+const RootProvider = ({ children }) => {
   const { theme } = useTheme();
   const error = useAppSelector((state) => state.ui.errorMessage);
 
+  const navigationTheme = useMemo(
+    () => ({
+      ...DefaultTheme,
+      colors: {
+        ...DefaultTheme.colors,
+        background: theme?.colors?.background ?? DefaultTheme.colors.background,
+        primary: theme?.colors?.primary ?? DefaultTheme.colors.primary,
+        text: theme?.colors?.onSurface ?? DefaultTheme.colors.text,
+        card: theme?.colors?.surface ?? DefaultTheme.colors.card,
+        border: theme?.colors?.outline ?? DefaultTheme.colors.border,
+      },
+    }),
+    [theme]
+  );
+
   return (
-    <PaperProvider theme={theme}>
-      <ErrorBoundary>
-        <OfflineBanner />
-        {children}
-        <ToastNotification visible={Boolean(error)} message={error || ''} onDismiss={() => {}} />
-      </ErrorBoundary>
-    </PaperProvider>
+    <NavigationThemeProvider value={navigationTheme}>
+      <PaperProvider theme={theme}>
+        <AppErrorBoundary>
+          <OfflineBanner />
+          {children}
+          <ToastNotification visible={Boolean(error)} message={error || ''} onDismiss={() => {}} />
+        </AppErrorBoundary>
+      </PaperProvider>
+    </NavigationThemeProvider>
   );
 };
+
+export function ErrorBoundary({ children }) {
+  return <AppErrorBoundary>{children}</AppErrorBoundary>;
+}
 
 const RootLayout = () => {
   const [fontsLoaded] = useFonts({
