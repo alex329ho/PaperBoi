@@ -1,6 +1,25 @@
 export const API_ENDPOINTS = {
-  topStories: '/news/top',
-  search: '/news/search',
-  authLogin: '/auth/login',
-  authRegister: '/auth/register',
-};
+  news: {
+    list: '/api/v1/news',
+    detail: (id: string | number) => `/api/v1/news/${id}`,
+    search: '/api/v1/news/search',
+    trending: '/api/v1/news/trending',
+  },
+  preferences: {
+    base: '/api/v1/preferences',
+    update: '/api/v1/preferences',
+    topics: '/api/v1/preferences/topics',
+  },
+  auth: {
+    login: '/api/v1/auth/login',
+    register: '/api/v1/auth/register',
+    refresh: '/api/v1/auth/refresh',
+    logout: '/api/v1/auth/logout',
+  },
+  email: {
+    sendSummary: '/api/v1/email/send-summary',
+    history: '/api/v1/email/history',
+  },
+} as const;
+
+export type ApiEndpointConfig = typeof API_ENDPOINTS;
