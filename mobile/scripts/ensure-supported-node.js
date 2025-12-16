@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const supportedMajors = [18, 20, 22];
+const supportedMajors = [18, 20, 22, 24];
 const nodeVersion = process.versions.node;
 const major = Number.parseInt(nodeVersion.split('.')[0], 10);
 
