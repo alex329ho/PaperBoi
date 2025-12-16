@@ -39,6 +39,8 @@ jest.mock('../services/storage', () => ({
   default: {
     getPreferences: jest.fn(),
     savePreferences: jest.fn(),
+    saveNotificationHistory: jest.fn(),
+    getNotificationHistory: jest.fn().mockResolvedValue([]),
   },
 }));
 
@@ -86,5 +88,15 @@ describe('NotificationService', () => {
     });
     expect(mockedStorage.savePreferences).toHaveBeenCalled();
     expect(Notifications.scheduleNotificationAsync).toHaveBeenCalled();
+  });
+
+  it('persists notification history when handling a payload', async () => {
+    await notificationService.handleNotification({
+      title: 'Ping',
+      body: 'Hello',
+      data: { type: 'reminder' },
+    });
+
+    expect(mockedStorage.saveNotificationHistory).toHaveBeenCalled();
   });
 });

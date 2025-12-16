@@ -1,5 +1,6 @@
 import { NewsArticle } from '../types/api';
 import cacheManager, { MAX_CACHE_BYTES } from '../utils/cacheManager';
+import { NotificationHistoryEntry } from '../types/notifications';
 import { getCacheSize, getItem, removeItem, setItem, StorageOptions } from '../utils/storage';
 
 export interface SummaryCacheItem {
@@ -49,6 +50,7 @@ const STORAGE_KEYS = {
   searchHistory: '@paperboi_search_history',
   theme: '@paperboi_theme',
   lastSync: '@paperboi_last_sync',
+  notificationHistory: '@paperboi_notification_history',
 };
 
 const sevenDaysAgo = () => {
@@ -70,7 +72,11 @@ export class StorageService {
       lastUpdated: new Date().toISOString(),
     };
     await setItem(STORAGE_KEYS.articles, payload);
-    await cacheManager.enforceLimit([STORAGE_KEYS.summaries, STORAGE_KEYS.articles]);
+    await cacheManager.enforceLimit([
+      STORAGE_KEYS.summaries,
+      STORAGE_KEYS.articles,
+      STORAGE_KEYS.notificationHistory,
+    ]);
     return payload.items;
   }
 
@@ -128,6 +134,21 @@ export class StorageService {
     return cached ?? [];
   }
 
+  async saveNotificationHistory(entries: NotificationHistoryEntry[]) {
+    const trimmed = entries.slice(0, 100);
+    await setItem(STORAGE_KEYS.notificationHistory, trimmed);
+    await cacheManager.enforceLimit([
+      STORAGE_KEYS.notificationHistory,
+      STORAGE_KEYS.articles,
+      STORAGE_KEYS.summaries,
+    ]);
+    return trimmed;
+  }
+
+  async getNotificationHistory(): Promise<NotificationHistoryEntry[]> {
+    return (await getItem<NotificationHistoryEntry[]>(STORAGE_KEYS.notificationHistory)) ?? [];
+  }
+
   async saveSearchHistory(history: string[]) {
     await setItem(STORAGE_KEYS.searchHistory, history.slice(-50));
     return history;
@@ -178,6 +199,7 @@ export class StorageService {
       STORAGE_KEYS.searchHistory,
       STORAGE_KEYS.theme,
       STORAGE_KEYS.lastSync,
+      STORAGE_KEYS.notificationHistory,
     ]);
   }
 

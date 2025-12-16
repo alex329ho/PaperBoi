@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import storageService, { PendingAction } from '../services/storage';
+import { NotificationHistoryEntry } from '../types/notifications';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -49,5 +50,18 @@ describe('StorageService', () => {
 
     await storageService.clearPendingActions();
     expect(await storageService.getPendingActions()).toHaveLength(0);
+  });
+
+  it('trims notification history and persists it', async () => {
+    const entries: NotificationHistoryEntry[] = Array.from({ length: 120 }, (_, idx) => ({
+      id: `n-${idx}`,
+      payload: { title: 't', body: 'b', data: { type: 'reminder' } },
+      receivedAt: new Date().toISOString(),
+    }));
+
+    const saved = await storageService.saveNotificationHistory(entries);
+    expect(saved).toHaveLength(100);
+    const fromCache = await storageService.getNotificationHistory();
+    expect(fromCache).toHaveLength(100);
   });
 });

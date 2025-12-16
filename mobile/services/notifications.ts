@@ -30,6 +30,7 @@ class NotificationService {
   private app?: FirebaseApp;
   private messaging?: Messaging;
   private history: NotificationHistoryEntry[] = [];
+  private listenersRegistered = false;
 
   private generateId() {
     if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -38,10 +39,20 @@ class NotificationService {
     return `notification-${Date.now()}-${Math.random()}`;
   }
 
+  private async hydrateHistory() {
+    try {
+      this.history = await storageService.getNotificationHistory();
+    } catch (error) {
+      console.warn('Failed to hydrate notification history', error);
+      this.history = [];
+    }
+  }
+
   async initialize() {
     this.bootstrapFirebase();
     await this.requestPermissions();
     await this.ensureNotificationChannel();
+    await this.hydrateHistory();
     await this.registerListeners();
     return this.getToken();
   }
@@ -114,6 +125,7 @@ class NotificationService {
       receivedAt: new Date().toISOString(),
     };
     this.history = [entry, ...this.history].slice(0, 50);
+    await storageService.saveNotificationHistory(this.history);
     return entry;
   }
 
@@ -157,6 +169,9 @@ class NotificationService {
   }
 
   async registerListeners() {
+    if (this.listenersRegistered) return;
+    this.listenersRegistered = true;
+
     Notifications.addNotificationReceivedListener(async (notification) => {
       const content = notification.request.content;
       const payload: NotificationPayload = {

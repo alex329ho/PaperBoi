@@ -1,6 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCacheSize } from './storage';
 
+// Centralized cache lifecycle manager responsible for enforcing the 50MB
+// storage budget, trimming stale records, and cleaning up sensitive data on
+// logout. All services should go through this helper rather than directly
+// calling AsyncStorage when performing cache maintenance so policies stay
+// consistent across the app.
+
 export const MAX_CACHE_BYTES = 50 * 1024 * 1024; // 50MB
 
 export interface CacheCleanupResult {
