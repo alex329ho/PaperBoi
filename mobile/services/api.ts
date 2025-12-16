@@ -1,3 +1,54 @@
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { Platform } from 'react-native';
+import requestInterceptor from './interceptors/requestInterceptor';
+import responseInterceptor from './interceptors/responseInterceptor';
+import retryInterceptor from './interceptors/retryInterceptor';
+import endpoints from './endpoints';
+
+// Minimal APP_VERSION fallback. Projects can import from app.json or env.
+const APP_VERSION = '1.0.0';
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.paperboi.app';
+
+const axiosInstance: AxiosInstance = axios.create({
+  baseURL: BASE_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Client-Version': APP_VERSION,
+    'X-Platform': Platform.OS,
+  },
+});
+
+// Register interceptors (order matters)
+axiosInstance.interceptors.request.use(requestInterceptor.onFulfilled, requestInterceptor.onRejected);
+axiosInstance.interceptors.response.use(responseInterceptor.onFulfilled, responseInterceptor.onRejected);
+
+// Retry interceptor is applied last to catch transient failures
+retryInterceptor.attach(axiosInstance);
+
+// Helper wrapper that supports AbortController and per-request timeout
+export type ApiOptions = AxiosRequestConfig & { timeoutMs?: number };
+
+export async function apiRequest<T = any>(config: ApiOptions, signal?: AbortSignal): Promise<AxiosResponse<T>> {
+  const source = axios.CancelToken.source();
+
+  if (signal) {
+    if (signal.aborted) source.cancel('aborted');
+    const onAbort = () => source.cancel('aborted');
+    signal.addEventListener('abort', onAbort, { once: true });
+    try {
+      const resp = await axiosInstance.request<T>({ ...config, cancelToken: source.token });
+      return resp;
+    } finally {
+      signal.removeEventListener('abort', () => source.cancel('aborted'));
+    }
+  }
+
+  return axiosInstance.request<T>({ ...config });
+}
+
+export { axiosInstance, endpoints };
 import axios from 'axios';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';

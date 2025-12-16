@@ -1,3 +1,60 @@
+import { AxiosRequestConfig } from 'axios';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { v4 as uuidv4 } from 'uuid';
+
+// Token storage keys - adjust to your app's keys
+const ACCESS_TOKEN_KEY = 'pb_access_token';
+
+async function getToken(): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
+  } catch (e) {
+    return null;
+  }
+}
+
+function addTimestamp(config: AxiosRequestConfig) {
+  config.headers = config.headers || {};
+  config.headers['X-Request-Timestamp'] = new Date().toISOString();
+}
+
+const onFulfilled = async (config: AxiosRequestConfig) => {
+  // Add Authorization header if token exists
+  const token = await getToken();
+  config.headers = config.headers || {};
+
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Add correlation id for tracing
+  if (!config.headers['X-Correlation-ID']) {
+    config.headers['X-Correlation-ID'] = uuidv4();
+  }
+
+  // Platform header (reliable fallback)
+  config.headers['X-Platform'] = Platform.OS;
+
+  addTimestamp(config);
+
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.debug('[API] Request:', config.method, config.url, config.params || config.data);
+  }
+
+  // Basic validation: ensure URL present
+  if (!config.url) throw new Error('Invalid request: missing URL');
+
+  return config;
+};
+
+const onRejected = (error: any) => {
+  if (__DEV__) console.warn('[API] Request error', error?.message || error);
+  return Promise.reject(error);
+};
+
+export default { onFulfilled, onRejected };
 import { AxiosInstance } from 'axios';
 import { Platform } from 'react-native';
 import { getAuthToken } from '../auth';

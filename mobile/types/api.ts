@@ -1,3 +1,20 @@
+export type ApiResponse<T = any> = {
+  ok: boolean;
+  data?: T;
+  error?: string | null;
+};
+
+export type Paginated<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  perPage: number;
+};
+
+export type ApiError = {
+  message: string;
+  code?: string | number;
+};
 import { AxiosRequestConfig } from 'axios';
 
 export interface ApiError {

@@ -1,3 +1,29 @@
+import axios from 'axios';
+import retryInterceptor from '../services/interceptors/retryInterceptor';
+
+describe('API service', () => {
+  it('attaches retry interceptor and retries transient failures', async () => {
+    const instance = axios.create();
+    retryInterceptor.attach(instance, { retries: 2 });
+
+    let called = 0;
+    instance.interceptors.request.use((c) => {
+      return c;
+    });
+
+    // Mock adapter: make the first two responses fail with 500, third succeed
+    instance.defaults.adapter = async (config: any) => {
+      called += 1;
+      if (called < 3) {
+        return { status: 500, data: {}, config };
+      }
+      return { status: 200, data: { ok: true }, config };
+    };
+
+    const resp = await instance.request({ url: '/test' });
+    expect(resp.status).toBe(200);
+  });
+});
 import { AxiosError } from 'axios';
 import { calculateBackoffDelay, buildDeduplicationKey } from '../utils/retry';
 import { parseApiError } from '../services/errorHandler';

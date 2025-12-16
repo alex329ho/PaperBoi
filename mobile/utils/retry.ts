@@ -1,3 +1,24 @@
+export function computeBackoffDelay(attempt: number, base = 300): number {
+  // exponential backoff with jitter
+  const exp = Math.pow(2, attempt - 1);
+  const jitter = Math.random() * base;
+  return Math.min(30000, Math.round(exp * base + jitter));
+}
+
+export async function retryWithBackoff<T>(fn: () => Promise<T>, retries = 5): Promise<T> {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (err) {
+      attempt++;
+      if (attempt > retries) throw err;
+      const delay = computeBackoffDelay(attempt);
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((res) => setTimeout(res, delay));
+    }
+  }
+}
 import { AxiosRequestConfig } from 'axios';
 import { EnhancedAxiosRequestConfig } from '../types/api';
 
