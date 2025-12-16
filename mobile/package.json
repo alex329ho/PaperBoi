@@ -7,8 +7,11 @@
     "expo": "./scripts/expo-cli.js"
   },
   "scripts": {
+    "prestart": "node ./scripts/ensure-supported-node.js",
     "start": "expo start",
+    "preandroid": "node ./scripts/ensure-supported-node.js",
     "android": "expo run:android",
+    "preios": "node ./scripts/ensure-supported-node.js",
     "ios": "expo run:ios",
     "postinstall": "node ./scripts/link-expo-wrapper.js",
     "lint": "eslint .",
@@ -19,6 +22,9 @@
     "prepare": "husky install",
     "build:dev": "eas build --profile development --platform all",
     "build:prod": "eas build --profile production --platform all"
+  },
+  "engines": {
+    "node": "^18.18.0 || ^20.11.0 || ^22.0.0"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
