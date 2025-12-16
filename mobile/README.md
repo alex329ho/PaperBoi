@@ -39,18 +39,28 @@ assets/                       # Images and fonts
 
 ## Getting Started
 
-1. **Install dependencies**
+1. **Use the supported Node.js version**
+
+   Expo SDK 51/52 is tested against Node 18 and 20. If you are on macOS and see
+   `spawn /usr/local/bin/node EAGAIN` from `npx expo start`, switch to the
+   project Node version with `nvm`:
+
+   ```bash
+   nvm use
+   ```
+
+2. **Install dependencies**
 
    ```bash
    cd mobile
    npm install
    ```
 
-2. **Environment variables**
+3. **Environment variables**
    - Copy `.env.example` to `.env.local` and update values.
    - Expo automatically loads `EXPO_PUBLIC_*` variables.
 
-3. **Run the app**
+4. **Run the app**
    ```bash
    npm run start
    # or
@@ -88,7 +98,7 @@ If `npx expo start --ios` fails with `xcrun simctl help exited with non-zero cod
 
 If you still see the error, open the Xcode app once to finish setup, then repeat step 4.
 
-4. **Type checking & linting**
+5. **Type checking & linting**
 
    ```bash
    npm run typecheck
@@ -96,13 +106,13 @@ If you still see the error, open the Xcode app once to finish setup, then repeat
    npm run format
    ```
 
-5. **Testing**
+6. **Testing**
 
    ```bash
    npm test
    ```
 
-6. **Builds (EAS)**
+7. **Builds (EAS)**
    ```bash
    npm run build:dev
    npm run build:prod
