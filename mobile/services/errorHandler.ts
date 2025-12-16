@@ -18,7 +18,8 @@ export const parseApiError = (error: AxiosError | Error): ApiError => {
     const axiosError = error as AxiosError;
     const status = axiosError.response?.status;
     const messageFromServer = (axiosError.response?.data as any)?.message as string | undefined;
-    const isOffline = networkErrorCodes.has(axiosError.code || '') || axiosError.message === 'Network Error';
+    const isOffline =
+      networkErrorCodes.has(axiosError.code || '') || axiosError.message === 'Network Error';
 
     return {
       message:

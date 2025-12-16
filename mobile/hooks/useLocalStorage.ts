@@ -16,7 +16,7 @@ export const useLocalStorage = <T>(key: string, initialValue: T) => {
       setValue(next);
       await storage.setItem(key, next);
     },
-    [key]
+    [key],
   );
 
   useEffect(() => {

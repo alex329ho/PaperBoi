@@ -22,7 +22,15 @@ const languages = ['en', 'es', 'fr', 'de'];
 
 const SearchScreen = () => {
   const router = useRouter();
-  const { search, executeSearch, loadMoreResults, saveRecent, toggleBookmark, saved, shareArticle } = useNews();
+  const {
+    search,
+    executeSearch,
+    loadMoreResults,
+    saveRecent,
+    toggleBookmark,
+    saved,
+    shareArticle,
+  } = useNews();
   const [query, setQuery] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
@@ -37,7 +45,12 @@ const SearchScreen = () => {
         executeSearch({
           query,
           page: 1,
-          filter: { topics: selectedTopics, regions: selectedRegions, languages: selectedLanguages, sortBy: sort },
+          filter: {
+            topics: selectedTopics,
+            regions: selectedRegions,
+            languages: selectedLanguages,
+            sortBy: sort,
+          },
         });
       }
     }, 400);
@@ -80,17 +93,29 @@ const SearchScreen = () => {
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
           {topics.map((topic) => (
-            <Chip key={topic} selected={selectedTopics.includes(topic)} onPress={() => toggleValue(topic, selectedTopics, setSelectedTopics)}>
+            <Chip
+              key={topic}
+              selected={selectedTopics.includes(topic)}
+              onPress={() => toggleValue(topic, selectedTopics, setSelectedTopics)}
+            >
               {topic}
             </Chip>
           ))}
           {regions.map((region) => (
-            <Chip key={region} selected={selectedRegions.includes(region)} onPress={() => toggleValue(region, selectedRegions, setSelectedRegions)}>
+            <Chip
+              key={region}
+              selected={selectedRegions.includes(region)}
+              onPress={() => toggleValue(region, selectedRegions, setSelectedRegions)}
+            >
               {region}
             </Chip>
           ))}
           {languages.map((lang) => (
-            <Chip key={lang} selected={selectedLanguages.includes(lang)} onPress={() => toggleValue(lang, selectedLanguages, setSelectedLanguages)}>
+            <Chip
+              key={lang}
+              selected={selectedLanguages.includes(lang)}
+              onPress={() => toggleValue(lang, selectedLanguages, setSelectedLanguages)}
+            >
               {lang.toUpperCase()}
             </Chip>
           ))}
@@ -125,10 +150,18 @@ const SearchScreen = () => {
           />
         </View>
         <HelperText type={showDateError ? 'error' : 'info'} visible>
-          {showDateError ? 'End date must be after start date.' : 'Add an optional date range to refine results.'}
+          {showDateError
+            ? 'End date must be after start date.'
+            : 'Add an optional date range to refine results.'}
         </HelperText>
 
-        <Button mode="contained-tonal" onPress={handleSubmit} style={{ marginTop: 8 }} disabled={!query} icon="magnify">
+        <Button
+          mode="contained-tonal"
+          onPress={handleSubmit}
+          style={{ marginTop: 8 }}
+          disabled={!query}
+          icon="magnify"
+        >
           Search
         </Button>
 
@@ -157,7 +190,9 @@ const SearchScreen = () => {
           <NewsList
             articles={search.results}
             loading={search.loading}
-            onSelect={(article) => router.push({ pathname: '/[article_id]', params: { article_id: article.id } })}
+            onSelect={(article) =>
+              router.push({ pathname: '/[article_id]', params: { article_id: article.id } })
+            }
             onBookmark={toggleBookmark}
             onShare={shareArticle}
             loadMore={loadMoreResults}

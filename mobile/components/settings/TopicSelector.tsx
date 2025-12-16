@@ -9,7 +9,9 @@ interface TopicSelectorProps {
 
 const TopicSelector: React.FC<TopicSelectorProps> = ({ topics, selected, onChange }) => {
   const toggle = (topic: string) => {
-    const next = selected.includes(topic) ? selected.filter((t) => t !== topic) : [...selected, topic];
+    const next = selected.includes(topic)
+      ? selected.filter((t) => t !== topic)
+      : [...selected, topic];
     onChange(next);
   };
 
@@ -19,7 +21,12 @@ const TopicSelector: React.FC<TopicSelectorProps> = ({ topics, selected, onChang
         Topics
       </Text>
       {topics.map((topic) => (
-        <Chip key={topic} style={{ marginRight: 8, marginBottom: 8 }} selected={selected.includes(topic)} onPress={() => toggle(topic)}>
+        <Chip
+          key={topic}
+          style={{ marginRight: 8, marginBottom: 8 }}
+          selected={selected.includes(topic)}
+          onPress={() => toggle(topic)}
+        >
           {topic}
         </Chip>
       ))}

@@ -19,7 +19,7 @@ const ArticleDetail = () => {
   const article = useAppSelector(
     (state) =>
       state.news.feed.items.find((item) => item.id === article_id) ||
-      state.news.search.results.find((item) => item.id === article_id)
+      state.news.search.results.find((item) => item.id === article_id),
   );
 
   useEffect(() => {
@@ -31,7 +31,11 @@ const ArticleDetail = () => {
   if (!article) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 }}>
-        {loading ? <ActivityIndicator /> : <Text accessibilityRole="alert">Article not found. Try refreshing.</Text>}
+        {loading ? (
+          <ActivityIndicator />
+        ) : (
+          <Text accessibilityRole="alert">Article not found. Try refreshing.</Text>
+        )}
         <Button onPress={() => router.back()} style={{ marginTop: 12 }}>
           Go back
         </Button>
@@ -55,7 +59,11 @@ const ArticleDetail = () => {
         <Button icon="arrow-left" onPress={() => router.back()}>
           Back
         </Button>
-        <IconButton icon="dots-vertical" onPress={() => shareArticle(article)} accessibilityLabel="Share article" />
+        <IconButton
+          icon="dots-vertical"
+          onPress={() => shareArticle(article)}
+          accessibilityLabel="Share article"
+        />
       </View>
       <Text variant="headlineSmall" style={{ marginBottom: 8 }}>
         {article.title}
@@ -63,12 +71,26 @@ const ArticleDetail = () => {
       <Text style={{ marginBottom: 8 }}>
         {article.source} • {formatDate(article.publishedAt)} • {readingTimeLabel}
       </Text>
-      {article.imageUrl ? <Image source={{ uri: article.imageUrl }} style={{ height: 200, marginBottom: 12 }} /> : null}
+      {article.imageUrl ? (
+        <Image source={{ uri: article.imageUrl }} style={{ height: 200, marginBottom: 12 }} />
+      ) : null}
       <SummaryCard title="Summary" summary={article.content || article.summary || ''} expandable />
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-        {article.region ? <Chip icon="map-marker" compact>{article.region}</Chip> : null}
-        {article.language ? <Chip icon="translate" compact>{article.language}</Chip> : null}
-        {article.topic ? <Chip icon="tag" compact>{article.topic}</Chip> : null}
+        {article.region ? (
+          <Chip icon="map-marker" compact>
+            {article.region}
+          </Chip>
+        ) : null}
+        {article.language ? (
+          <Chip icon="translate" compact>
+            {article.language}
+          </Chip>
+        ) : null}
+        {article.topic ? (
+          <Chip icon="tag" compact>
+            {article.topic}
+          </Chip>
+        ) : null}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
         <Button icon="link-variant" mode="outlined" onPress={() => openExternal(article.url)}>
@@ -101,10 +123,17 @@ const ArticleDetail = () => {
         renderItem={({ item }) => (
           <Card
             style={{ width: 220, marginRight: 12 }}
-            onPress={() => router.push({ pathname: '/[article_id]', params: { article_id: item.id } })}
+            onPress={() =>
+              router.push({ pathname: '/[article_id]', params: { article_id: item.id } })
+            }
           >
             {item.imageUrl ? <Card.Cover source={{ uri: item.imageUrl }} /> : null}
-            <Card.Title title={item.title} subtitle={item.source} titleNumberOfLines={2} subtitleNumberOfLines={1} />
+            <Card.Title
+              title={item.title}
+              subtitle={item.source}
+              titleNumberOfLines={2}
+              subtitleNumberOfLines={1}
+            />
           </Card>
         )}
         showsHorizontalScrollIndicator={false}

@@ -30,7 +30,7 @@ export const attachRetryInterceptor = (client: AxiosInstance) => {
 
       await delay(backoffDelay);
       return client(config as EnhancedAxiosRequestConfig);
-    }
+    },
   );
 };
 

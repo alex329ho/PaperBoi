@@ -1,12 +1,6 @@
 import { NewsArticle } from '../types/api';
 import cacheManager, { MAX_CACHE_BYTES } from '../utils/cacheManager';
-import {
-  getCacheSize,
-  getItem,
-  removeItem,
-  setItem,
-  StorageOptions,
-} from '../utils/storage';
+import { getCacheSize, getItem, removeItem, setItem, StorageOptions } from '../utils/storage';
 
 export interface SummaryCacheItem {
   id: string;
@@ -68,7 +62,9 @@ const secureOptions: StorageOptions = { secure: true, encrypt: true };
 export class StorageService {
   async saveArticles(articles: NewsArticle[]) {
     const cutoff = sevenDaysAgo();
-    const filtered = articles.filter((article) => !article.publishedAt || new Date(article.publishedAt) >= cutoff);
+    const filtered = articles.filter(
+      (article) => !article.publishedAt || new Date(article.publishedAt) >= cutoff,
+    );
     const payload: StoredArticles = {
       items: filtered,
       lastUpdated: new Date().toISOString(),

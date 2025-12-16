@@ -18,8 +18,22 @@ jest.mock('../hooks/useNews', () => {
   };
   return {
     useNews: () => ({
-      feed: { items: [article], loading: false, refreshing: false, hasNextPage: false, error: undefined },
-      search: { results: [article], loading: false, page: 1, hasNextPage: false, recent: [], query: '', filters: { topics: [], regions: [], languages: [], sortBy: 'latest' } },
+      feed: {
+        items: [article],
+        loading: false,
+        refreshing: false,
+        hasNextPage: false,
+        error: undefined,
+      },
+      search: {
+        results: [article],
+        loading: false,
+        page: 1,
+        hasNextPage: false,
+        recent: [],
+        query: '',
+        filters: { topics: [], regions: [], languages: [], sortBy: 'latest' },
+      },
       saved: [article],
       loadFeed: jest.fn(),
       refreshFeed: jest.fn(),
@@ -59,7 +73,11 @@ jest.mock('../hooks/usePreferences', () => ({
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jest.fn() }) }));
 
 const renderWithProviders = (component: React.ReactElement) =>
-  render(<Provider store={store}><PaperProvider>{component}</PaperProvider></Provider>);
+  render(
+    <Provider store={store}>
+      <PaperProvider>{component}</PaperProvider>
+    </Provider>,
+  );
 
 describe('Screens', () => {
   it('renders home screen feed', () => {

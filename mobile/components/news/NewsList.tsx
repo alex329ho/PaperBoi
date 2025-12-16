@@ -64,7 +64,9 @@ const NewsList: React.FC<NewsListProps> = ({
       ) : null
     }
     refreshControl={
-      onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="gray" /> : undefined
+      onRefresh ? (
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="gray" />
+      ) : undefined
     }
     onEndReachedThreshold={0.3}
     onEndReached={loadMore}

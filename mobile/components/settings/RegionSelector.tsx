@@ -9,7 +9,9 @@ interface RegionSelectorProps {
 
 const RegionSelector: React.FC<RegionSelectorProps> = ({ regions, selected, onChange }) => {
   const toggle = (region: string) => {
-    const next = selected.includes(region) ? selected.filter((r) => r !== region) : [...selected, region];
+    const next = selected.includes(region)
+      ? selected.filter((r) => r !== region)
+      : [...selected, region];
     onChange(next);
   };
 
@@ -19,7 +21,12 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ regions, selected, onCh
         Regions
       </Text>
       {regions.map((region) => (
-        <Chip key={region} style={{ marginRight: 8, marginBottom: 8 }} selected={selected.includes(region)} onPress={() => toggle(region)}>
+        <Chip
+          key={region}
+          style={{ marginRight: 8, marginBottom: 8 }}
+          selected={selected.includes(region)}
+          onPress={() => toggle(region)}
+        >
           {region}
         </Chip>
       ))}

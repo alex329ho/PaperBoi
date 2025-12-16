@@ -26,7 +26,9 @@ const LoadingSkeletons: React.FC<LoadingSkeletonsProps> = ({ count = 2, showSpin
           borderRadius: 8,
         }}
       />
-      {showSpinner ? <ActivityIndicator accessibilityLabel="Loading content" style={{ marginTop: 12 }} /> : null}
+      {showSpinner ? (
+        <ActivityIndicator accessibilityLabel="Loading content" style={{ marginTop: 12 }} />
+      ) : null}
     </View>
   );
 };

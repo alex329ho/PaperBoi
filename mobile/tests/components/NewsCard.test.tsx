@@ -19,12 +19,7 @@ const article: Article = {
 describe('NewsCard', () => {
   it('renders article details', () => {
     const { getByText } = render(
-      <NewsCard
-        article={article}
-        onPress={() => {}}
-        onBookmark={() => {}}
-        onShare={() => {}}
-      />
+      <NewsCard article={article} onPress={() => {}} onBookmark={() => {}} onShare={() => {}} />,
     );
 
     expect(getByText('Sample article')).toBeTruthy();

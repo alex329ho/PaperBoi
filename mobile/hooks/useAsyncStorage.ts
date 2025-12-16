@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const useAsyncStorage = <T,>(key: string, initialValue: T) => {
+export const useAsyncStorage = <T>(key: string, initialValue: T) => {
   const [value, setValue] = useState<T>(initialValue);
 
   const load = useCallback(async () => {
@@ -16,7 +16,7 @@ export const useAsyncStorage = <T,>(key: string, initialValue: T) => {
       setValue(next);
       await AsyncStorage.setItem(key, JSON.stringify(next));
     },
-    [key]
+    [key],
   );
 
   useEffect(() => {

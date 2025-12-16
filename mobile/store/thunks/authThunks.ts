@@ -88,7 +88,8 @@ export const registerUser = createAsyncThunk<AuthResponse, RegisterPayload, { st
       await AsyncStorage.setItem('paperboi_user', JSON.stringify(data.user));
       return data;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unexpected error during registration';
+      const message =
+        error instanceof Error ? error.message : 'Unexpected error during registration';
       return thunkApi.rejectWithValue(message);
     }
   },
@@ -119,7 +120,8 @@ export const refreshToken = createAsyncThunk<AuthResponse, void, { state: RootSt
       }
       return data;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unexpected error during token refresh';
+      const message =
+        error instanceof Error ? error.message : 'Unexpected error during token refresh';
       await AsyncStorage.removeItem('paperboi_token');
       await AsyncStorage.removeItem('paperboi_user');
       return thunkApi.rejectWithValue(message);

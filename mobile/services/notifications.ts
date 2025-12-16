@@ -2,14 +2,12 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
+import { getMessaging, getToken, Messaging, onMessage, onTokenRefresh } from 'firebase/messaging';
 import {
-  getMessaging,
-  getToken,
-  Messaging,
-  onMessage,
-  onTokenRefresh,
-} from 'firebase/messaging';
-import { NotificationHistoryEntry, NotificationPayload, NotificationPreferences } from '../types/notifications';
+  NotificationHistoryEntry,
+  NotificationPayload,
+  NotificationPreferences,
+} from '../types/notifications';
 import storageService from './storage';
 
 Notifications.setNotificationHandler({
@@ -25,7 +23,8 @@ const BACKEND_TOKEN_ENDPOINT = '/preferences/device-token';
 
 const getFirebaseConfig = () =>
   Constants.expoConfig?.extra?.firebase ||
-  (Constants as unknown as { manifest?: { extra?: Record<string, unknown> } }).manifest?.extra?.firebase;
+  (Constants as unknown as { manifest?: { extra?: Record<string, unknown> } }).manifest?.extra
+    ?.firebase;
 
 class NotificationService {
   private app?: FirebaseApp;
@@ -214,7 +213,11 @@ class NotificationService {
       const now = new Date();
       const trigger = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
       if (trigger < now) trigger.setDate(trigger.getDate() + 1);
-      await this.scheduleLocalNotification(trigger, 'Your Daily News Summary', '5 new articles in Technology');
+      await this.scheduleLocalNotification(
+        trigger,
+        'Your Daily News Summary',
+        '5 new articles in Technology',
+      );
     }
     return preferences;
   }

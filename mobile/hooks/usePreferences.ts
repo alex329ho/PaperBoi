@@ -65,12 +65,12 @@ export const usePreferences = () => {
         setSaving(false);
       }
     },
-    [dispatch]
+    [dispatch],
   );
 
   const hydratedPreferences = useMemo(
     () => ({ ...preferences, ...(persisted ?? {}) }),
-    [persisted, preferences]
+    [persisted, preferences],
   );
 
   return {

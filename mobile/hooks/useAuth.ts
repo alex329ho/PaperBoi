@@ -20,7 +20,7 @@ export const useAuth = () => {
         throw err;
       }
     },
-    [dispatch]
+    [dispatch],
   );
 
   const createAccount = useCallback(
@@ -36,7 +36,7 @@ export const useAuth = () => {
         throw err;
       }
     },
-    [dispatch]
+    [dispatch],
   );
 
   const signOutUser = useCallback(async () => {

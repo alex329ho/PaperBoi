@@ -1,5 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { fetchPreferences, savePreferencesLocally, updatePreferences } from '../thunks/preferencesThunks';
+import {
+  fetchPreferences,
+  savePreferencesLocally,
+  updatePreferences,
+} from '../thunks/preferencesThunks';
 import { PreferencesState } from '../types';
 
 const initialState: PreferencesState = {

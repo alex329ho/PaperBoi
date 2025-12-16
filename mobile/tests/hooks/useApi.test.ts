@@ -22,7 +22,7 @@ describe('useApi', () => {
     const { result } = renderHook(() =>
       useApi(async () => {
         throw new Error('boom');
-      })
+      }),
     );
 
     await act(async () => {

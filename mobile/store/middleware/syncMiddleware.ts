@@ -1,10 +1,5 @@
 import { Middleware } from '@reduxjs/toolkit';
-import {
-  fetchArticleDetail,
-  fetchNews,
-  generateSummary,
-  searchNews,
-} from '../thunks/newsThunks';
+import { fetchArticleDetail, fetchNews, generateSummary, searchNews } from '../thunks/newsThunks';
 import { fetchPreferences, updatePreferences } from '../thunks/preferencesThunks';
 import { loginUser, logoutUser, refreshToken, registerUser } from '../thunks/authThunks';
 import {
@@ -95,7 +90,10 @@ const syncMiddleware: Middleware = (storeApi) => {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unexpected sync error';
         storeApi.dispatch(
-          updatePendingAction({ id: pending.id, changes: { lastError: message, attempt: pending.attempt + 1 } }),
+          updatePendingAction({
+            id: pending.id,
+            changes: { lastError: message, attempt: pending.attempt + 1 },
+          }),
         );
         await delay(Math.min(30000, 1000 * 2 ** pending.attempt));
       }

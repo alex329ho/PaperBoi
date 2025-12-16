@@ -9,7 +9,7 @@ const shouldLog = __DEV__;
 const retryWithRefreshedToken = async (
   client: AxiosInstance,
   error: AxiosError,
-  config: EnhancedAxiosRequestConfig
+  config: EnhancedAxiosRequestConfig,
 ): Promise<AxiosResponse | never> => {
   if (config._retryAuth) {
     await clearTokens();
@@ -59,7 +59,7 @@ export const attachResponseInterceptor = (client: AxiosInstance) => {
 
       logApiError(parsedError);
       return Promise.reject(parsedError);
-    }
+    },
   );
 };
 

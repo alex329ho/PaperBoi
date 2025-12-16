@@ -1,4 +1,8 @@
-import newsReducer, { saveArticle, removeSavedArticle, NewsState } from '../../store/slices/newsSlice';
+import newsReducer, {
+  saveArticle,
+  removeSavedArticle,
+  NewsState,
+} from '../../store/slices/newsSlice';
 
 const baseState: NewsState = {
   articles: [],

@@ -50,7 +50,9 @@ describe('NotificationService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedStorage.getPreferences = jest.fn().mockResolvedValue({ notificationsEnabled: true });
-    mockedStorage.savePreferences = jest.fn().mockResolvedValue({ notificationsEnabled: true, topics: [] });
+    mockedStorage.savePreferences = jest
+      .fn()
+      .mockResolvedValue({ notificationsEnabled: true, topics: [] });
   });
 
   it('initializes and fetches token', async () => {
@@ -77,7 +79,11 @@ describe('NotificationService', () => {
   it('applies preferences and schedules summary', async () => {
     const now = new Date();
     const hourString = `${now.getHours()}:${now.getMinutes()}`;
-    await notificationService.applyPreferences({ enabled: true, topics: [], dailySummaryTime: hourString });
+    await notificationService.applyPreferences({
+      enabled: true,
+      topics: [],
+      dailySummaryTime: hourString,
+    });
     expect(mockedStorage.savePreferences).toHaveBeenCalled();
     expect(Notifications.scheduleNotificationAsync).toHaveBeenCalled();
   });

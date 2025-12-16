@@ -34,7 +34,7 @@ export const useNews = () => {
     (params?: FetchFeedParams) => {
       dispatch(fetchFeed(params ?? {}));
     },
-    [dispatch]
+    [dispatch],
   );
 
   const refreshFeed = useCallback(() => {
@@ -52,7 +52,7 @@ export const useNews = () => {
     (params: SearchParams) => {
       dispatch(searchNews(params));
     },
-    [dispatch]
+    [dispatch],
   );
 
   const loadMoreResults = useCallback(() => {
@@ -66,7 +66,7 @@ export const useNews = () => {
       dispatch(setRecentSearches(recent));
       persistRecentSearches(recent);
     },
-    [dispatch, persistRecentSearches]
+    [dispatch, persistRecentSearches],
   );
 
   const toggleBookmark = useCallback(
@@ -78,7 +78,7 @@ export const useNews = () => {
         dispatch(saveArticle(article));
       }
     },
-    [dispatch, saved]
+    [dispatch, saved],
   );
 
   const shareArticle = useCallback(async (article: Article) => {
@@ -100,7 +100,10 @@ export const useNews = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const offline = useMemo(() => (networkStatus ? !networkStatus.isConnected : false), [networkStatus]);
+  const offline = useMemo(
+    () => (networkStatus ? !networkStatus.isConnected : false),
+    [networkStatus],
+  );
 
   return {
     feed,

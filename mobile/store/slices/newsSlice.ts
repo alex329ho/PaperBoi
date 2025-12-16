@@ -7,7 +7,14 @@ import {
   searchNews,
   persistBookmarkedArticles,
 } from '../thunks/newsThunks';
-import { Article, FetchFeedParams, FilterState, NewsState, PaginationState, SearchParams } from '../types';
+import {
+  Article,
+  FetchFeedParams,
+  FilterState,
+  NewsState,
+  PaginationState,
+  SearchParams,
+} from '../types';
 
 const initialFilter: FilterState = {
   topics: [],

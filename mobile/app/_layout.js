@@ -31,7 +31,7 @@ const RootProvider = ({ children }) => {
         border: theme?.colors?.outline ?? DefaultTheme.colors.border,
       },
     }),
-    [theme]
+    [theme],
   );
 
   return (

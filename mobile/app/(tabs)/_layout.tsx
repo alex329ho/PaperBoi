@@ -9,10 +9,42 @@ const TabsLayout = () => (
       tabBarActiveTintColor: '#1E40AF',
     }}
   >
-    <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="newspaper" color={color} size={size} /> }} />
-    <Tabs.Screen name="search" options={{ title: 'Search', tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="magnify" color={color} size={size} /> }} />
-    <Tabs.Screen name="saved" options={{ title: 'Saved', tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="bookmark" color={color} size={size} /> }} />
-    <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="cog" color={color} size={size} /> }} />
+    <Tabs.Screen
+      name="home"
+      options={{
+        title: 'Home',
+        tabBarIcon: ({ color, size }) => (
+          <MaterialCommunityIcons name="newspaper" color={color} size={size} />
+        ),
+      }}
+    />
+    <Tabs.Screen
+      name="search"
+      options={{
+        title: 'Search',
+        tabBarIcon: ({ color, size }) => (
+          <MaterialCommunityIcons name="magnify" color={color} size={size} />
+        ),
+      }}
+    />
+    <Tabs.Screen
+      name="saved"
+      options={{
+        title: 'Saved',
+        tabBarIcon: ({ color, size }) => (
+          <MaterialCommunityIcons name="bookmark" color={color} size={size} />
+        ),
+      }}
+    />
+    <Tabs.Screen
+      name="settings"
+      options={{
+        title: 'Settings',
+        tabBarIcon: ({ color, size }) => (
+          <MaterialCommunityIcons name="cog" color={color} size={size} />
+        ),
+      }}
+    />
   </Tabs>
 );
 

@@ -15,7 +15,13 @@ const ForgotPasswordScreen = () => {
   return (
     <View style={{ flex: 1, padding: 16, justifyContent: 'center', gap: 12 }}>
       <Text variant="headlineSmall">Reset password</Text>
-      <TextInput label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+      <TextInput
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
       <Button mode="contained" disabled={!isEmail(email)} onPress={handleSubmit}>
         Send reset link
       </Button>

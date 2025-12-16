@@ -14,7 +14,9 @@ const SavedScreen = () => {
   const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
 
   const filtered = useMemo(() => {
-    const list = saved.filter((article) => article.title.toLowerCase().includes(query.toLowerCase()));
+    const list = saved.filter((article) =>
+      article.title.toLowerCase().includes(query.toLowerCase()),
+    );
     return list.sort((a, b) => {
       const left = new Date(a.publishedAt ?? a.createdAt).getTime();
       const right = new Date(b.publishedAt ?? b.createdAt).getTime();
@@ -44,7 +46,9 @@ const SavedScreen = () => {
       </View>
       <NewsList
         articles={filtered}
-        onSelect={(article) => router.push({ pathname: '/[article_id]', params: { article_id: article.id } })}
+        onSelect={(article) =>
+          router.push({ pathname: '/[article_id]', params: { article_id: article.id } })
+        }
         onBookmark={toggleBookmark}
         onShare={shareArticle}
         emptyLabel="No saved articles yet. Save stories to read offline."
@@ -54,7 +58,8 @@ const SavedScreen = () => {
         <View style={{ padding: 24, alignItems: 'center' }}>
           <Text>Saved articles are available offline for quick reading.</Text>
           <HelperText type="info" visible>
-            Tap the bookmark icon on any story to keep it here. Swipe actions let you delete from saved quickly.
+            Tap the bookmark icon on any story to keep it here. Swipe actions let you delete from
+            saved quickly.
           </HelperText>
           <Button mode="contained-tonal" icon="compass" onPress={() => router.push('/(tabs)/home')}>
             Browse articles

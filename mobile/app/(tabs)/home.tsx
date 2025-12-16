@@ -50,7 +50,8 @@ const HomeScreen = () => {
 
   const savedIds = useMemo(() => saved.map((item) => item.id), [saved]);
 
-  const openArticle = (articleId: string) => router.push({ pathname: '/[article_id]', params: { article_id: articleId } });
+  const openArticle = (articleId: string) =>
+    router.push({ pathname: '/[article_id]', params: { article_id: articleId } });
 
   const toggleValue = (value: string, list: string[], setter: (next: string[]) => void) => {
     setter(list.includes(value) ? list.filter((item) => item !== value) : [...list, value]);
@@ -74,7 +75,11 @@ const HomeScreen = () => {
       <Appbar.Header>
         <Appbar.Content title="PaperBoi" subtitle="Daily briefings" />
         <Appbar.Action icon="tune" accessibilityLabel="Open filters" onPress={applyFilters} />
-        <Appbar.Action icon="cog" accessibilityLabel="Open settings" onPress={() => router.push('/(tabs)/settings')} />
+        <Appbar.Action
+          icon="cog"
+          accessibilityLabel="Open settings"
+          onPress={() => router.push('/(tabs)/settings')}
+        />
       </Appbar.Header>
 
       <Banner
@@ -94,7 +99,12 @@ const HomeScreen = () => {
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {topicOptions.map((topic) => (
-            <Chip key={topic} icon="tag" selected={topics.includes(topic)} onPress={() => toggleValue(topic, topics, setTopics)}>
+            <Chip
+              key={topic}
+              icon="tag"
+              selected={topics.includes(topic)}
+              onPress={() => toggleValue(topic, topics, setTopics)}
+            >
               {topic}
             </Chip>
           ))}

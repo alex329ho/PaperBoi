@@ -21,7 +21,10 @@ const syncSlice = createSlice({
     removePendingAction(state, action: PayloadAction<string>) {
       state.pendingActions = state.pendingActions.filter((item) => item.id !== action.payload);
     },
-    updatePendingAction(state, action: PayloadAction<{ id: string; changes: Partial<SyncPendingAction> }>) {
+    updatePendingAction(
+      state,
+      action: PayloadAction<{ id: string; changes: Partial<SyncPendingAction> }>,
+    ) {
       const target = state.pendingActions.find((item) => item.id === action.payload.id);
       if (target) {
         Object.assign(target, action.payload.changes);

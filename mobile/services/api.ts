@@ -9,7 +9,10 @@ import { API_ENDPOINTS } from './endpoints';
 import { ApiResponse, NewsArticle, Preference } from '../types/api';
 
 const APP_VERSION =
-  Constants.expoConfig?.version || Constants.manifest?.version || Constants.expoConfig?.extra?.appVersion || 'dev';
+  Constants.expoConfig?.version ||
+  Constants.manifest?.version ||
+  Constants.expoConfig?.extra?.appVersion ||
+  'dev';
 
 export const apiClient = axios.create({
   baseURL: Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL,
@@ -40,7 +43,8 @@ export const searchArticles = async (query: Record<string, unknown>) =>
 export const getTrendingTopics = async () =>
   apiClient.get<ApiResponse<string[]>>(API_ENDPOINTS.news.trending);
 
-export const getPreferences = async () => apiClient.get<ApiResponse<Preference>>(API_ENDPOINTS.preferences.base);
+export const getPreferences = async () =>
+  apiClient.get<ApiResponse<Preference>>(API_ENDPOINTS.preferences.base);
 
 export const updatePreferences = async (payload: Partial<Preference>) =>
   apiClient.put<ApiResponse<Preference>>(API_ENDPOINTS.preferences.update, payload);
@@ -51,7 +55,8 @@ export const updateTopics = async (topics: string[]) =>
 export const sendEmailSummary = async (payload: { range: string }) =>
   apiClient.post<ApiResponse<{ status: string }>>(API_ENDPOINTS.email.sendSummary, payload);
 
-export const getEmailHistory = async () => apiClient.get<ApiResponse<any[]>>(API_ENDPOINTS.email.history);
+export const getEmailHistory = async () =>
+  apiClient.get<ApiResponse<any[]>>(API_ENDPOINTS.email.history);
 
 // Backwards compatibility for existing code paths
 export const fetchTopStories = async () => {

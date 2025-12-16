@@ -23,7 +23,13 @@ const RegisterScreen = () => {
     <View style={{ flex: 1, padding: 16, justifyContent: 'center', gap: 12 }}>
       <Text variant="headlineSmall">Join PaperBoi</Text>
       <TextInput label="Name" value={name} onChangeText={setName} />
-      <TextInput label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+      <TextInput
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
       <TextInput label="Password" value={password} onChangeText={setPassword} secureTextEntry />
       <Button mode="contained" onPress={handleRegister} disabled={disabled} loading={loading}>
         Create account

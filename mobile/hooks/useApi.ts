@@ -10,9 +10,9 @@ export interface UseApiState<T> {
   loading: boolean;
 }
 
-export const useApi = <T,>(
+export const useApi = <T>(
   requestFactory: (signal: AbortSignal) => Promise<T>,
-  options?: AxiosRequestConfig
+  options?: AxiosRequestConfig,
 ) => {
   const [state, setState] = useState<UseApiState<T>>({ data: null, error: null, loading: false });
   const abortController = useRef<AbortController | null>(null);
@@ -33,7 +33,7 @@ export const useApi = <T,>(
         throw parsedError;
       }
     },
-    [requestFactory]
+    [requestFactory],
   );
 
   useEffect(() => () => abortController.current?.abort(), []);

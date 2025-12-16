@@ -3,6 +3,7 @@
 React Native + Expo application for the PaperBoi news summarization experience.
 
 ## Tech Stack
+
 - **Expo** (React Native) with TypeScript
 - **Expo Router** for file-based navigation
 - **Redux Toolkit** with **Redux Persist** for state management
@@ -11,6 +12,7 @@ React Native + Expo application for the PaperBoi news summarization experience.
 - **Jest** + **React Native Testing Library** for testing
 
 ## Project Structure
+
 ```
 app/
 ├── _layout.tsx               # Root layout with providers
@@ -36,7 +38,9 @@ assets/                       # Images and fonts
 ```
 
 ## Getting Started
+
 1. **Install dependencies**
+
    ```bash
    cd mobile
    npm install
@@ -55,19 +59,23 @@ assets/                       # Images and fonts
    ```
 
 ### macOS simulator prerequisites
+
 If `npx expo start --ios` fails with `xcrun simctl help exited with non-zero code: 72`, the Xcode tools the simulator depends on are missing or misconfigured. Fix it with the following steps (in order):
 
 1. **Install Xcode Command Line Tools** so `simctl` is available:
+
    ```bash
    xcode-select --install
    ```
 
 2. **Point to the correct Developer folder** (sometimes CLT installs but `xcrun` still looks in the wrong place):
+
    ```bash
    sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
    ```
 
 3. **Accept Xcode’s license** (otherwise `xcrun` can exit with code 72):
+
    ```bash
    sudo xcodebuild -license accept
    ```
@@ -81,6 +89,7 @@ If `npx expo start --ios` fails with `xcrun simctl help exited with non-zero cod
 If you still see the error, open the Xcode app once to finish setup, then repeat step 4.
 
 4. **Type checking & linting**
+
    ```bash
    npm run typecheck
    npm run lint
@@ -88,6 +97,7 @@ If you still see the error, open the Xcode app once to finish setup, then repeat
    ```
 
 5. **Testing**
+
    ```bash
    npm test
    ```
@@ -99,26 +109,32 @@ If you still see the error, open the Xcode app once to finish setup, then repeat
    ```
 
 ## Navigation
+
 - **Expo Router** drives navigation via the `app/` directory.
 - `(tabs)` contains the bottom tab navigator.
 - `auth` stack handles login/register flows.
 - Dynamic article route `[article_id].tsx` renders article details from store.
 
 ## State Management
+
 - `store/store.ts` configures Redux Toolkit, persistence, and DevTools.
 - Slices live under `store/slices/` (auth, news, preferences, ui, settings).
 - Middleware (`store/middleware/`) handles analytics toggling and error propagation.
 
 ## Firebase & Notifications
+
 - Notification permissions handled in `hooks/usePushNotifications` and `services/notifications`.
 - Configure Firebase keys in `.env.local` using `EXPO_PUBLIC_FIREBASE_*` variables.
 
 ## Code Quality
+
 - ESLint + Prettier configs at repo root.
 - Husky + lint-staged run lint/format on staged files (`npm run prepare`).
 
 ## Testing Notes
+
 - Jest configured with `jest-expo` and React Native Testing Library in `jest.config.js`.
 
 ## Assets
+
 - Placeholder assets exist under `assets/images` and `assets/fonts`. Replace with production-ready files before release.

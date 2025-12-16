@@ -20,7 +20,11 @@ export const login = async (email: string, password: string): Promise<UserProfil
   return { id: data.id, email: data.email, name: data.name } as UserProfile;
 };
 
-export const register = async (name: string, email: string, password: string): Promise<UserProfile> => {
+export const register = async (
+  name: string,
+  email: string,
+  password: string,
+): Promise<UserProfile> => {
   const { data } = await api.post(API_ENDPOINTS.auth.register, { name, email, password });
   await persistTokens(data);
   return { id: data.id, email: data.email, name: data.name } as UserProfile;

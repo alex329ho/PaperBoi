@@ -119,7 +119,7 @@ class NetworkManager {
         } catch (error) {
           reject(error);
         }
-      })
+      }),
     );
   }
 

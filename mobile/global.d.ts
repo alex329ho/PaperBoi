@@ -73,7 +73,9 @@ declare function afterAll(fn: () => any | Promise<any>): void;
 
 declare namespace jest {
   type Mocked<T> = T & { [K in keyof T]: any };
-  type MockedFunction<T extends (...args: any[]) => any> = (...args: Parameters<T>) => ReturnType<T>;
+  type MockedFunction<T extends (...args: any[]) => any> = (
+    ...args: Parameters<T>
+  ) => ReturnType<T>;
 }
 
 interface ProcessEnv {
@@ -105,7 +107,11 @@ declare module 'redux-persist/integration/react';
 declare module 'expo-web-browser';
 
 declare function require(path: string): any;
-declare function setTimeout(handler: (...args: any[]) => void, timeout?: number, ...args: any[]): any;
+declare function setTimeout(
+  handler: (...args: any[]) => void,
+  timeout?: number,
+  ...args: any[]
+): any;
 declare function clearTimeout(handle?: any): void;
 declare module 'react-native-safe-area-context';
 declare module 'redux-persist';
@@ -114,7 +120,9 @@ declare module 'redux-persist/es/types';
 declare module 'reselect';
 
 declare module 'react-redux' {
-  export type TypedUseSelectorHook<TState> = <TSelected>(selector: (state: TState) => TSelected) => TSelected;
+  export type TypedUseSelectorHook<TState> = <TSelected>(
+    selector: (state: TState) => TSelected,
+  ) => TSelected;
   export function useDispatch<T = any>(): T;
   export function useSelector<TSelected>(selector: (state: any) => TSelected): TSelected;
   export const Provider: React.FC<{ store: any; children?: React.ReactNode }>;
@@ -127,7 +135,11 @@ declare module '@reduxjs/toolkit' {
   export function createSlice(options: any): any;
   export function configureStore(options: any): any;
   export function combineReducers(reducers: any): any;
-  export function createAsyncThunk<Returned, ThunkArg = void, ThunkApiConfig extends { state?: unknown } = {}>(
+  export function createAsyncThunk<
+    Returned,
+    ThunkArg = void,
+    ThunkApiConfig extends { state?: unknown } = {},
+  >(
     typePrefix: string,
     payloadCreator: (
       arg: ThunkArg,

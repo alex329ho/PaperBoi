@@ -9,7 +9,10 @@ interface AsyncState<T> {
 /**
  * Simple hook to load async data with cancellation support.
  */
-export const useAsyncData = <T,>(fetcher: (signal?: AbortSignal) => Promise<T>, deps: any[] = []) => {
+export const useAsyncData = <T>(
+  fetcher: (signal?: AbortSignal) => Promise<T>,
+  deps: any[] = [],
+) => {
   const [state, setState] = useState<AsyncState<T>>({ data: null, error: null, loading: false });
   const abortController = useRef<AbortController | null>(null);
 
