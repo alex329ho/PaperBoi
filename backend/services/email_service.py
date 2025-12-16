@@ -86,7 +86,9 @@ class EmailService:
             self.logger.error("Email send failed", extra={"email_id": email_id, "error": str(exc)})
             raise
 
-    async def _build_and_send_async(self, recipients: List[str], subject: str, html_content: str) -> str:
+    async def _build_and_send_async(
+        self, recipients: List[str], subject: str, html_content: str, *, email_id: str | None = None
+    ) -> str:
         normalized = validate_email_addresses(recipients)
         plain_content = html_to_text(html_content)
         message = self.smtp_manager.build_message(
@@ -97,7 +99,7 @@ class EmailService:
             headers={"List-Unsubscribe": f"<{DEFAULT_UNSUBSCRIBE_URL}>"},
         )
 
-        email_id = str(uuid4())
+        email_id = email_id or str(uuid4())
         try:
             await self.smtp_manager.send_with_retry(message)
             self._record_status(email_id=email_id, recipients=normalized, subject=subject, status=EmailStatus.SENT)
@@ -210,7 +212,7 @@ class EmailService:
                 unsubscribe_url=DEFAULT_UNSUBSCRIBE_URL,
             )
             try:
-                await self._build_and_send_async([recipient], subject, html)
+                await self._build_and_send_async([recipient], subject, html, email_id=email_id)
             except Exception as exc:  # pragma: no cover - defensive logging path
                 self.logger.error("Scheduled email failed", extra={"email_id": email_id, "error": str(exc)})
 

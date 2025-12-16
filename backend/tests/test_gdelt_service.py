@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock
 
 import fakeredis.aioredis
 import pytest
+import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -21,7 +22,7 @@ from backend.services.gdelt_service import GDELTService  # noqa: E402
 from backend.services.exceptions import GDELTInvalidParameterError  # noqa: E402
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture()
 async def redis_client():
     client = fakeredis.aioredis.FakeRedis()
     try:
@@ -30,7 +31,7 @@ async def redis_client():
         await client.aclose()
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture()
 async def db_session() -> AsyncSession:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as connection:
@@ -43,7 +44,7 @@ async def db_session() -> AsyncSession:
     await engine.dispose()
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture()
 async def service(db_session: AsyncSession, redis_client: fakeredis.aioredis.FakeRedis) -> GDELTService:
     return GDELTService(db_session=db_session, redis_client=redis_client)
 
