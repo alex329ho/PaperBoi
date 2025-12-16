@@ -2,6 +2,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const envinfo = require('envinfo');
+const { ensureSupportedNode } = require('./ensure-supported-node');
 
 const args = process.argv.slice(2);
 
@@ -24,10 +25,12 @@ async function printInfo() {
   console.log(info);
 }
 
-async function main() {
-  if (args[0] === 'info') {
-    await printInfo();
-    return;
+  async function main() {
+    ensureSupportedNode();
+
+    if (args[0] === 'info') {
+      await printInfo();
+      return;
   }
 
   // Quick handling for version flag to support environments without global expo installed

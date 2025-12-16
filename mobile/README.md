@@ -41,9 +41,10 @@ assets/                       # Images and fonts
 
 1. **Use the supported Node.js version**
 
-   Expo SDK 51/52 is tested against Node 18 and 20. If you are on macOS and see
-   `spawn /usr/local/bin/node EAGAIN` from `npx expo start`, switch to the
-   project Node version with `nvm`:
+   Expo SDK 51/52 runs on Node 18, 20, 22, and 24. This project is pinned to
+   Node 24.11.1 via `.nvmrc` so `nvm use` will switch you to a supported runtime.
+   If you are on macOS and see `spawn /usr/local/bin/node EAGAIN` from
+   `npx expo start`, switch to the project Node version with `nvm`:
 
    ```bash
    nvm use
