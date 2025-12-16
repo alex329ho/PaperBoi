@@ -23,9 +23,6 @@ const TabsLayout = () => (
       options={{
         title: 'Profile',
         tabBarIcon: ({ color, size }) => (
-<<<<<<< ours
-          <MaterialCommunityIcons name="account" color={color} size={size} />
-=======
           <MaterialCommunityIcons name="magnify" color={color} size={size} />
         ),
       }}
