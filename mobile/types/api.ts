@@ -1,36 +1,31 @@
-export type ApiResponse<T = any> = {
-  ok: boolean;
-  data?: T;
-  error?: string | null;
-};
+import { AxiosRequestConfig } from 'axios';
 
-export type Paginated<T> = {
-  items: T[];
-  total: number;
+export interface Pagination {
   page: number;
   perPage: number;
-};
-
-export type ApiError = {
-  message: string;
-  code?: string | number;
-};
-import { AxiosRequestConfig } from 'axios';
+  total: number;
+}
 
 export interface ApiError {
   message: string;
   status?: number;
-  code?: string;
+  code?: string | number;
   isOffline?: boolean;
   url?: string;
   method?: string;
   correlationId?: string;
 }
 
-export interface Pagination {
+export interface ApiResponse<T> {
+  data: T;
+  pagination?: Pagination;
+}
+
+export interface Paginated<T> {
+  items: T[];
+  total: number;
   page: number;
   perPage: number;
-  total: number;
 }
 
 export interface NewsArticle {
@@ -52,11 +47,6 @@ export interface Preference {
 export interface AuthTokens {
   accessToken: string;
   refreshToken?: string;
-}
-
-export interface ApiResponse<T> {
-  data: T;
-  pagination?: Pagination;
 }
 
 export interface EnhancedAxiosRequestConfig extends AxiosRequestConfig {

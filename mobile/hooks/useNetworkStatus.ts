@@ -1,17 +1,4 @@
 import { useEffect, useState } from 'react';
-import networkManager from '../services/networkManager';
-
-export function useNetworkStatus() {
-  const [online, setOnline] = useState<boolean>(networkManager.isOnline());
-
-  useEffect(() => {
-    const unsub = networkManager.subscribe((o) => setOnline(o));
-    return unsub;
-  }, []);
-
-  return { online };
-}
-import { useEffect, useState } from 'react';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import networkManager from '../services/networkManager';
 

@@ -128,12 +128,6 @@ const HomeScreen = () => {
               {lang.toUpperCase()}
             </Chip>
           ))}
-<<<<<<< ours
-          <Chip mode="outlined" icon="account" onPress={() => router.push('/(tabs)/profile')}>
-            Profile
-          </Chip>
-=======
->>>>>>> theirs
         </View>
       </View>
 

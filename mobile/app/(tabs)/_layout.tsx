@@ -36,7 +36,6 @@ const TabsLayout = () => (
         title: 'Saved',
         tabBarIcon: ({ color, size }) => (
           <MaterialCommunityIcons name="bookmark-outline" color={color} size={size} />
->>>>>>> theirs
         ),
       }}
     />

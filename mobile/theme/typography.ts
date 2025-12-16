@@ -1,4 +1,4 @@
-import { MD3Typescale } from 'react-native-paper';
+import type { MD3Typescale } from 'react-native-paper/lib/typescript/types';
 
 // Typography tokens used to construct the MD3 font configuration.
 export const typography = {
@@ -31,6 +31,11 @@ export const typography = {
 
 // Map the typography tokens into the MD3 typescale expected by React Native Paper.
 export const fontConfig: MD3Typescale = {
+  default: {
+    fontFamily: typography.fontFamily.regular,
+    fontWeight: '400',
+    letterSpacing: typography.letterSpacing.normal,
+  },
   displayLarge: {
     fontFamily: typography.fontFamily.bold,
     fontWeight: '700',

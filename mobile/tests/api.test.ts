@@ -3,7 +3,7 @@ import retryInterceptor from '../services/interceptors/retryInterceptor';
 
 describe('API service', () => {
   it('attaches retry interceptor and retries transient failures', async () => {
-    const instance = axios.create();
+    const instance = axios.create() as any;
     retryInterceptor.attach(instance, { retries: 2 });
 
     let called = 0;
