@@ -1,38 +1,53 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, Image, View } from 'react-native';
-import { Text, Card, Button, IconButton, Chip } from 'react-native-paper';
-import { useAppSelector } from '../hooks/useRedux';
+import { FlatList, Image, Linking, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Button, Card, Chip, IconButton, Text } from 'react-native-paper';
+import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { formatDate } from '../utils/date';
 import SummaryCard from '../components/summary/SummaryCard';
 import { useNews } from '../hooks/useNews';
-import NewsList from '../components/news/NewsList';
+import { fetchArticleDetail } from '../store/thunks/newsThunks';
 
 const ArticleDetail = () => {
   const router = useRouter();
   const { article_id } = useLocalSearchParams() as { article_id?: string };
-  const { saved, toggleBookmark, shareArticle, openExternal, feed } = useNews();
-  const article = useAppSelector((state) =>
-    state.news.feed.items.find((item) => item.id === article_id) || state.news.search.results.find((item) => item.id === article_id)
+  const dispatch = useAppDispatch();
+  const { saved, toggleBookmark, shareArticle, openExternal } = useNews();
+  const { items, loading } = useAppSelector((state) => state.news.feed);
+  const searchResults = useAppSelector((state) => state.news.search.results);
+
+  const article = useAppSelector(
+    (state) =>
+      state.news.feed.items.find((item) => item.id === article_id) ||
+      state.news.search.results.find((item) => item.id === article_id)
   );
 
-  const isSaved = saved.some((item) => item.id === article_id);
+  useEffect(() => {
+    if (!article && article_id) {
+      dispatch(fetchArticleDetail(article_id));
+    }
+  }, [article, article_id, dispatch]);
 
   if (!article) {
     return (
-      <Card style={{ margin: 16 }}>
-        <Card.Title title="Article not found" />
-        <Card.Content>
-          <Text>Try refreshing your feed.</Text>
-        </Card.Content>
-        <Card.Actions>
-          <Button onPress={() => router.back()}>Go back</Button>
-        </Card.Actions>
-      </Card>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 }}>
+        {loading ? <ActivityIndicator /> : <Text accessibilityRole="alert">Article not found. Try refreshing.</Text>}
+        <Button onPress={() => router.back()} style={{ marginTop: 12 }}>
+          Go back
+        </Button>
+      </View>
     );
   }
 
-  const related = feed.items.filter((item) => item.id !== article.id).slice(0, 5);
+  const isSaved = saved.some((item) => item.id === article.id);
+  const related = [...items, ...searchResults].filter((item) => item.id !== article.id).slice(0, 6);
+  const readingTimeLabel = article.readingTime ? `${article.readingTime} min read` : 'Quick read';
+
+  const shareByEmail = () => {
+    const subject = encodeURIComponent(article.title);
+    const body = encodeURIComponent(`${article.summary ?? ''}\n\n${article.url ?? ''}`);
+    Linking.openURL(`mailto:?subject=${subject}&body=${body}`).catch(() => shareArticle(article));
+  };
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
@@ -46,19 +61,20 @@ const ArticleDetail = () => {
         {article.title}
       </Text>
       <Text style={{ marginBottom: 8 }}>
-        {article.source} • {formatDate(article.publishedAt)} {article.readingTime ? `• ${article.readingTime} min read` : ''}
+        {article.source} • {formatDate(article.publishedAt)} • {readingTimeLabel}
       </Text>
       {article.imageUrl ? <Image source={{ uri: article.imageUrl }} style={{ height: 200, marginBottom: 12 }} /> : null}
-      <SummaryCard title="Summary" summary={article.content || article.summary} />
+      <SummaryCard title="Summary" summary={article.content || article.summary || ''} expandable />
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
         {article.region ? <Chip icon="map-marker" compact>{article.region}</Chip> : null}
         {article.language ? <Chip icon="translate" compact>{article.language}</Chip> : null}
+        {article.topic ? <Chip icon="tag" compact>{article.topic}</Chip> : null}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
         <Button icon="link-variant" mode="outlined" onPress={() => openExternal(article.url)}>
           Read Full
         </Button>
-        <Button icon="email" mode="outlined" onPress={() => shareArticle(article)}>
+        <Button icon="email" mode="outlined" onPress={shareByEmail}>
           Email
         </Button>
         <IconButton
@@ -67,17 +83,32 @@ const ArticleDetail = () => {
           accessibilityLabel={isSaved ? 'Remove bookmark' : 'Save bookmark'}
         />
       </View>
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+        <Button icon="share-variant" onPress={() => shareArticle(article)}>
+          Share
+        </Button>
+        <Chip icon="shield" compact>
+          Source: {article.source}
+        </Chip>
+      </View>
       <Text variant="titleMedium" style={{ marginBottom: 8 }}>
         Related articles
       </Text>
-      <NewsList
-        articles={related}
-        onSelect={(item) => router.push({ pathname: '/[article_id]', params: { article_id: item.id } })}
-        onBookmark={toggleBookmark}
-        onShare={shareArticle}
-        hasNextPage={false}
-        emptyLabel="No related articles"
-        savedIds={saved.map((item) => item.id)}
+      <FlatList
+        horizontal
+        data={related}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <Card
+            style={{ width: 220, marginRight: 12 }}
+            onPress={() => router.push({ pathname: '/[article_id]', params: { article_id: item.id } })}
+          >
+            {item.imageUrl ? <Card.Cover source={{ uri: item.imageUrl }} /> : null}
+            <Card.Title title={item.title} subtitle={item.source} titleNumberOfLines={2} subtitleNumberOfLines={1} />
+          </Card>
+        )}
+        showsHorizontalScrollIndicator={false}
+        accessibilityLabel="Related articles"
       />
     </ScrollView>
   );

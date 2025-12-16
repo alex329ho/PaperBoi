@@ -1,53 +1,143 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { LayoutAnimation, Platform, UIManager, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { View } from 'react-native';
-import { Button, Chip, Text, useTheme } from 'react-native-paper';
+import { Appbar, Banner, Chip, SegmentedButtons, Text, useTheme } from 'react-native-paper';
 import NewsList from '../../components/news/NewsList';
 import LoadingSkeletons from '../../components/common/LoadingSkeletons';
+import OfflineBanner from '../../components/common/OfflineBanner';
 import { useNews } from '../../hooks/useNews';
+
+const topicOptions = ['Technology', 'Business', 'Science', 'Health'];
+const regionOptions = ['US', 'Europe', 'Asia', 'Global'];
+const languageOptions = ['en', 'es', 'fr'];
 
 const HomeScreen = () => {
   const router = useRouter();
   const { colors } = useTheme();
-  const { feed, saved, loadMoreFeed, refreshFeed, offline, toggleBookmark, shareArticle } = useNews();
+  const {
+    feed,
+    saved,
+    loadMoreFeed,
+    refreshFeed,
+    loadFeed,
+    offline,
+    networkStatus,
+    toggleBookmark,
+    shareArticle,
+  } = useNews();
+
+  const [topics, setTopics] = useState<string[]>(['Technology']);
+  const [regions, setRegions] = useState<string[]>(['US']);
+  const [languages, setLanguages] = useState<string[]>(['en']);
+  const [sortBy, setSortBy] = useState<'recent' | 'trending' | 'relevance'>('recent');
+
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, [feed.items.length]);
+
+  useEffect(() => {
+    applyFilters();
+    // Re-run feed when sort or filters change for always-fresh data
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy, topics, regions, languages]);
+
+  const savedIds = useMemo(() => saved.map((item) => item.id), [saved]);
 
   const openArticle = (articleId: string) => router.push({ pathname: '/[article_id]', params: { article_id: articleId } });
 
+  const toggleValue = (value: string, list: string[], setter: (next: string[]) => void) => {
+    setter(list.includes(value) ? list.filter((item) => item !== value) : [...list, value]);
+  };
+
+  const applyFilters = () =>
+    loadFeed({
+      page: 1,
+      filter: {
+        topics,
+        regions,
+        languages,
+        sortBy,
+      },
+    });
+
+  const networkLabel = networkStatus?.isConnected ? 'Online' : 'Offline';
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text variant="titleLarge">PaperBoi</Text>
-        <Button icon="cog" onPress={() => router.push('/(tabs)/settings')} accessibilityLabel="Open settings">
-          Settings
-        </Button>
-      </View>
-      <View style={{ paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-        <Chip icon="tag" compact>
-          Technology
-        </Chip>
-        <Chip icon="earth" compact>
-          US
-        </Chip>
-        <Chip mode="outlined" onPress={() => router.push('/(tabs)/search')}>
-          More
-        </Chip>
-      </View>
-      {offline ? (
-        <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-          <Text style={{ color: colors.error }}>Offline mode: showing cached content.</Text>
+      <Appbar.Header>
+        <Appbar.Content title="PaperBoi" subtitle="Daily briefings" />
+        <Appbar.Action icon="tune" accessibilityLabel="Open filters" onPress={applyFilters} />
+        <Appbar.Action icon="cog" accessibilityLabel="Open settings" onPress={() => router.push('/(tabs)/settings')} />
+      </Appbar.Header>
+
+      <Banner
+        visible={!!feed.error}
+        icon="alert-circle"
+        actions={[{ label: 'Retry', onPress: refreshFeed }]}
+        accessibilityRole="alert"
+      >
+        {feed.error}
+      </Banner>
+
+      <OfflineBanner />
+
+      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 }}>
+        <Text variant="titleSmall" style={{ marginBottom: 6 }}>
+          Active filters ({networkLabel})
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {topicOptions.map((topic) => (
+            <Chip key={topic} icon="tag" selected={topics.includes(topic)} onPress={() => toggleValue(topic, topics, setTopics)}>
+              {topic}
+            </Chip>
+          ))}
+          {regionOptions.map((region) => (
+            <Chip
+              key={region}
+              icon="earth"
+              selected={regions.includes(region)}
+              onPress={() => toggleValue(region, regions, setRegions)}
+            >
+              {region}
+            </Chip>
+          ))}
+          {languageOptions.map((lang) => (
+            <Chip
+              key={lang}
+              icon="translate"
+              selected={languages.includes(lang)}
+              onPress={() => toggleValue(lang, languages, setLanguages)}
+            >
+              {lang.toUpperCase()}
+            </Chip>
+          ))}
+          <Chip mode="outlined" icon="plus" onPress={() => router.push('/(tabs)/search')}>
+            More
+          </Chip>
         </View>
-      ) : null}
-      {feed.error ? (
-        <View style={{ padding: 16 }}>
-          <Text accessibilityRole="alert">{feed.error}</Text>
-          <Button onPress={refreshFeed} mode="contained" style={{ marginTop: 8 }}>
-            Retry
-          </Button>
-        </View>
-      ) : null}
+      </View>
+
+      <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+        <SegmentedButtons
+          value={sortBy}
+          onValueChange={(value) => setSortBy(value as typeof sortBy)}
+          buttons={[
+            { value: 'recent', label: 'Recent', icon: 'clock-outline' },
+            { value: 'trending', label: 'Trending', icon: 'fire' },
+            { value: 'relevance', label: 'Relevance', icon: 'star-outline' },
+          ]}
+        />
+      </View>
+
       {feed.loading && !feed.items.length ? (
-        <LoadingSkeletons />
+        <LoadingSkeletons count={3} />
       ) : (
         <NewsList
           articles={feed.items}
@@ -59,10 +149,16 @@ const HomeScreen = () => {
           onShare={shareArticle}
           loadMore={loadMoreFeed}
           hasNextPage={feed.hasNextPage}
-          savedIds={saved.map((item) => item.id)}
-          emptyLabel="No articles yet. Pull to refresh to fetch the latest headlines."
+          savedIds={savedIds}
+          emptyLabel="No articles yet. Pull to refresh or update your filters."
         />
       )}
+
+      {offline ? (
+        <Banner visible icon="wifi-off" style={{ backgroundColor: colors.surfaceVariant }}>
+          Offline mode: showing cached stories. Pull to refresh when reconnected.
+        </Banner>
+      ) : null}
     </SafeAreaView>
   );
 };

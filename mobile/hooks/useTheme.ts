@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useColorScheme } from 'react-native';
-import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
+import { appThemes } from '../theme/theme';
 import { useAppDispatch, useAppSelector } from './useRedux';
 import { setTheme } from '../store/slices/uiSlice';
 
@@ -11,7 +11,7 @@ export const useTheme = () => {
 
   const theme = useMemo(() => {
     const mode = preference || systemScheme || 'light';
-    return mode === 'dark' ? MD3DarkTheme : MD3LightTheme;
+    return mode === 'dark' ? appThemes.dark : appThemes.light;
   }, [preference, systemScheme]);
 
   const toggleTheme = () => {

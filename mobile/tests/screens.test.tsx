@@ -21,6 +21,7 @@ jest.mock('../hooks/useNews', () => {
       feed: { items: [article], loading: false, refreshing: false, hasNextPage: false, error: undefined },
       search: { results: [article], loading: false, page: 1, hasNextPage: false, recent: [], query: '', filters: { topics: [], regions: [], languages: [], sortBy: 'latest' } },
       saved: [article],
+      loadFeed: jest.fn(),
       refreshFeed: jest.fn(),
       loadMoreFeed: jest.fn(),
       executeSearch: jest.fn(),
@@ -30,6 +31,7 @@ jest.mock('../hooks/useNews', () => {
       shareArticle: jest.fn(),
       openExternal: jest.fn(),
       offline: false,
+      networkStatus: { isConnected: true },
     }),
   };
 });
