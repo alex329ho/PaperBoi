@@ -1,7 +1,7 @@
 """FastAPI application entrypoint for PaperBoi."""
 from __future__ import annotations
 
-from typing import Any, Dict
+from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,10 +20,27 @@ from backend.utils.logger import configure_logging, get_logger
 configure_logging(settings)
 logger = get_logger(__name__)
 
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Manage startup and shutdown tasks for the application."""
+
+    logger.info("Starting application", extra={"environment": settings.environment})
+    settings.require_secure_configuration()
+    await validate_connection()
+    try:
+        yield
+    finally:
+        try:
+            await dispose_engine()
+        except Exception:  # noqa: BLE001
+            logger.exception("Failed to dispose database engine during shutdown")
+
+
 app = FastAPI(
     title=settings.app_name,
     version="1.0.0",
     openapi_url=f"{settings.api_v1_prefix}/openapi.json",
+    lifespan=lifespan,
 )
 
 # Middleware configuration
@@ -54,25 +71,6 @@ def register_routes(application: FastAPI) -> None:
 
 register_exception_handlers(app)
 register_routes(app)
-
-
-@app.on_event("startup")
-async def on_startup() -> None:
-    """Validate configuration and database connectivity when the app boots."""
-
-    logger.info("Starting application", extra={"environment": settings.environment})
-    settings.require_secure_configuration()
-    await validate_connection()
-
-
-@app.on_event("shutdown")
-async def on_shutdown() -> None:
-    """Gracefully release resources on shutdown."""
-
-    try:
-        await dispose_engine()
-    except Exception:  # noqa: BLE001
-        logger.exception("Failed to dispose database engine during shutdown")
 
 
 @app.get("/healthz", include_in_schema=False)

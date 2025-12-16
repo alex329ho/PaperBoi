@@ -9,7 +9,11 @@ from pydantic import BaseModel, ConfigDict
 class BaseSchema(BaseModel):
     """Base schema with configuration shared across responses."""
 
-    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
+    model_config = ConfigDict(
+        populate_by_name=True,
+        from_attributes=True,
+        protected_namespaces=(),
+    )
 
 
 class TimestampSchema(BaseSchema):
