@@ -2,6 +2,13 @@
 # Quick health check for repository initialization and hygiene.
 set -euo pipefail
 
+# If this file contains Windows CRLF line endings, re-run a cleaned copy so
+# shells don't try to execute stray CR characters (which can show up as
+# "zsh: command not found: #"). This makes the script robust to CRLF files.
+if LC_ALL=C grep -q $'\r' "$0" >/dev/null 2>&1; then
+  exec bash <(tr -d '\r' < "$0") "$@"
+fi
+
 # Ensure we're in a git repository
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "✅ Git repository initialized"
