@@ -6,6 +6,11 @@ const { ensureSupportedNode } = require('./ensure-supported-node');
 const fs = require('fs');
 
 const args = process.argv.slice(2);
+const command = args[0];
+
+const connectionFlags = ['--tunnel', '--lan', '--localhost', '--offline'];
+const hasConnectionFlag =
+  args.some((arg) => connectionFlags.includes(arg) || arg.startsWith('--host')) ?? false;
 
 async function printInfo() {
   const info = await envinfo.run(
@@ -37,7 +42,7 @@ function resolveLocalExpoCli() {
 async function main() {
   ensureSupportedNode();
 
-  if (args[0] === 'info') {
+  if (command === 'info') {
     await printInfo();
     return;
   }
@@ -47,6 +52,22 @@ async function main() {
     // Mirror the expected project Expo SDK/CLI version
     console.log('52.0.0');
     return;
+  }
+
+  // Default to a tunnel connection for reliable QR scanning from iOS Camera/Expo Go
+  if (command === 'start' && !hasConnectionFlag) {
+    const defaultConnection = process.env.EXPO_DEFAULT_CONNECTION || 'tunnel';
+    const connectionArgMap = {
+      tunnel: '--tunnel',
+      lan: '--lan',
+      localhost: '--localhost',
+      offline: '--offline',
+    };
+    const connectionArg = connectionArgMap[defaultConnection];
+    if (connectionArg) {
+      args.push(connectionArg);
+      console.log(`No connection flag supplied; defaulting to ${connectionArg} for Expo start`);
+    }
   }
 
   const cliPath = resolveLocalExpoCli();
