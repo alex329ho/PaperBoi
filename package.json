@@ -1,0 +1,11 @@
+{
+  "name": "paperboi-project",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Root workspace utilities for PaperBoi",
+  "scripts": {
+    "start": "npm --prefix mobile start",
+    "start:mobile": "npm --prefix mobile start",
+    "install:mobile": "npm --prefix mobile install"
+  }
+}

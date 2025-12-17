@@ -71,7 +71,7 @@ assets/                       # Images and fonts
    npm run ios
    ```
 
-   > ℹ️ The `npm run start` script now defaults to the Expo **tunnel** connection for more reliable QR scanning from the iOS Camera/Expo Go. If you prefer LAN/localhost, set `EXPO_DEFAULT_CONNECTION=lan` (or `localhost`) before starting the dev server.
+   > ℹ️ The `npm run start` script now defaults to the Expo **tunnel** connection for more reliable QR scanning from the iOS Camera/Expo Go. If you prefer LAN/localhost, set `EXPO_DEFAULT_CONNECTION=lan` (or `localhost`) before starting the dev server. You can run `npm start` from the repository root, and it will proxy to `mobile`.
 
 ### macOS simulator prerequisites
 
