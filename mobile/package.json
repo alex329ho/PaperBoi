@@ -9,6 +9,8 @@
   "scripts": {
     "prestart": "node ./scripts/ensure-supported-node.js",
     "start": "expo start",
+    "expo:start": "NODE_OPTIONS=--max-old-space-size=2048 expo start -- --max-workers 2",
+    "expo:stop": "ps aux | grep -E 'npm exec expo start|/node_modules/.bin/expo start' | grep -v grep | awk '{print $2}' | xargs -r kill || true",
     "preandroid": "node ./scripts/ensure-supported-node.js",
     "android": "expo run:android",
     "preios": "node ./scripts/ensure-supported-node.js",
@@ -23,9 +25,9 @@
     "build:dev": "eas build --profile development --platform all",
     "build:prod": "eas build --profile production --platform all"
   },
-    "engines": {
-      "node": "^18.18.0 || ^20.11.0 || ^22.0.0 || ^24.0.0"
-    },
+  "engines": {
+    "node": ">=18.18.0 <25.0.0"
+  },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
     "@react-native-async-storage/async-storage": "1.23.1",
