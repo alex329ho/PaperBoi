@@ -53,10 +53,10 @@ export function ErrorBoundary({ children }) {
 
 const RootLayout = () => {
   const [fontsLoaded] = useFonts({
-    'Inter-Regular': require('../assets/fonts/Inter-Regular.ttf'),
-    'Inter-Bold': require('../assets/fonts/Inter-Bold.ttf'),
-    'Inter-SemiBold': require('../assets/fonts/Inter-SemiBold.ttf'),
-    'Inter-Medium': require('../assets/fonts/Inter-Medium.ttf'),
+    'RozhaOne-Regular': require('../assets/fonts/RozhaOne-Regular.ttf'),
+    'RozhaOne-Bold': require('../assets/fonts/RozhaOne-Bold.ttf'),
+    'RozhaOne-SemiBold': require('../assets/fonts/RozhaOne-SemiBold.ttf'),
+    'RozhaOne-Medium': require('../assets/fonts/RozhaOne-Medium.ttf'),
   });
 
   useEffect(() => {

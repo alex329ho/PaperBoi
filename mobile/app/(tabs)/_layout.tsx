@@ -19,9 +19,9 @@ const TabsLayout = () => (
       }}
     />
     <Tabs.Screen
-      name="profile"
+      name="search"
       options={{
-        title: 'Profile',
+        title: 'Search',
         tabBarIcon: ({ color, size }) => (
           <MaterialCommunityIcons name="magnify" color={color} size={size} />
         ),
@@ -37,11 +37,11 @@ const TabsLayout = () => (
       }}
     />
     <Tabs.Screen
-      name="settings"
+      name="profile"
       options={{
-        title: 'Settings',
+        title: 'Profile',
         tabBarIcon: ({ color, size }) => (
-          <MaterialCommunityIcons name="cog" color={color} size={size} />
+          <MaterialCommunityIcons name="account" color={color} size={size} />
         ),
       }}
     />
