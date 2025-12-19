@@ -204,6 +204,16 @@ def email_status():
 if __name__ == "__main__":
     import uvicorn
 
-    port = int(Path(__file__).stem.split("_")[-1]) if "_" in Path(__file__).stem else 9000
+    # Derive a port from the filename suffix if present (e.g. mock_server_9001.py).
+    # If the filename doesn't end with a numeric suffix, fall back to 9000.
+    try:
+        stem = Path(__file__).stem
+        if "_" in stem:
+            candidate = stem.split("_")[-1]
+            port = int(candidate)
+        else:
+            port = 9000
+    except Exception:
+        port = 9000
     logger.info("Starting PaperBoi mock server on 0.0.0.0:%s", port)
     uvicorn.run(app, host="0.0.0.0", port=port)

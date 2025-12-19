@@ -1,5 +1,104 @@
 {
   "info": {
+    "name": "PaperBoi Integration",
+    "_postman_id": "paperboi-integration-collection",
+    "description": "Basic requests for integration testing and QA",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Pass1234!\",\n  \"name\": \"Integration User\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","register"] }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Pass1234!\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
+      }
+    },
+    {
+      "name": "Get Preferences",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/api/v1/preferences", "host": ["{{baseUrl}}"], "path": ["api","v1","preferences"] }
+      }
+    },
+    {
+      "name": "Update Preferences",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"topics\": [\"ai\"],\n  \"regions\": [\"US\"],\n  \"languages\": [\"en\"]\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/preferences", "host": ["{{baseUrl}}"], "path": ["api","v1","preferences"] }
+      }
+    },
+    {
+      "name": "List News",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/v1/news?limit=10", "host": ["{{baseUrl}}"], "path": ["api","v1","news"], "query": [{ "key": "limit", "value": "10" }] }
+      }
+    },
+    {
+      "name": "Fetch Fresh",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"query\": \"ai\",\n  \"timespan\": \"2hours\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/news/fetch-fresh", "host": ["{{baseUrl}}"], "path": ["api","v1","news","fetch-fresh"] }
+      }
+    },
+    {
+      "name": "Send Summary Email",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"recipients\": [\"user@example.com\"],\n  \"topics\": [\"ai\"],\n  \"include_count\": 3\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/email/send-summary", "host": ["{{baseUrl}}"], "path": ["api","v1","email","send-summary"] }
+      }
+    },
+    {
+      "name": "Add Bookmark",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"article_id\": \"article-1\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/bookmarks", "host": ["{{baseUrl}}"], "path": ["api","v1","bookmarks"] }
+      }
+    },
+    {
+      "name": "Mock Fail Next",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/mock/fail-next", "host": ["{{baseUrl}}"], "path": ["mock","fail-next"] }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:9000" },
+    { "key": "token", "value": "" }
+  ]
+}
+{
+  "info": {
     "name": "PaperBoi Backend-Mobile Integration",
     "_postman_id": "c1bc9c5b-2dbf-4bb4-9c42-0d9e38d33b1f",
     "description": "Collection covering auth, preferences, news, summaries, and email flows for PaperBoi.",
