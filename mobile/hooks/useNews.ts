@@ -21,7 +21,7 @@ const SAVED_ARTICLES_KEY = 'paperboi_saved_articles';
 
 export const useNews = () => {
   const dispatch = useAppDispatch();
-  const { feed, search, saved } = useAppSelector((state) => state.news);
+  const { feed, search, saved, recentSearches } = useAppSelector((state) => state.news);
   const networkStatus = useNetworkStatus();
   const { update: persistRecentSearches } = useAsyncStorage<string[]>(RECENT_SEARCHES_KEY, []);
   const { update: persistSaved } = useAsyncStorage<Article[]>(SAVED_ARTICLES_KEY, []);
@@ -109,6 +109,7 @@ export const useNews = () => {
     feed,
     search,
     saved,
+    recentSearches,
     offline,
     networkStatus,
     loadFeed,

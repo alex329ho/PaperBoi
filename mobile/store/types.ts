@@ -33,6 +33,24 @@ export type PaginationState = {
   limit: number;
 };
 
+export type FeedState = {
+  items: Article[];
+  loading: boolean;
+  refreshing?: boolean;
+  hasNextPage?: boolean;
+  page: number;
+  error?: string | null;
+};
+
+export type SearchState = {
+  results: Article[];
+  loading: boolean;
+  hasNextPage?: boolean;
+  page: number;
+  query?: string;
+  error?: string | null;
+};
+
 export type FilterState = {
   topics: string[];
   regions: string[];
@@ -67,6 +85,8 @@ export type NewsState = {
   loading?: boolean;
   error: string | null;
   lastFetch: number | null;
+  feed?: FeedState;
+  search?: SearchState;
 };
 
 export type FetchFeedParams = {

@@ -1,16 +1,13 @@
-import * as SecureStore from 'expo-secure-store';
+import { getAuthToken as getStoredToken, setAccessToken, setRefreshToken, clearTokens as clearStoredTokens } from './tokenStorage';
 import api from './api';
 import { API_ENDPOINTS } from './endpoints';
 import { AuthTokens } from '../types/api';
 import { UserProfile } from '../store/slices/authSlice';
 
-const ACCESS_TOKEN_KEY = 'paperboi-token';
-const REFRESH_TOKEN_KEY = 'paperboi-refresh-token';
-
 const persistTokens = async (tokens: AuthTokens) => {
-  await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, tokens.accessToken);
+  await setAccessToken(tokens.accessToken);
   if (tokens.refreshToken) {
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, tokens.refreshToken);
+    await setRefreshToken(tokens.refreshToken);
   }
 };
 
@@ -31,7 +28,7 @@ export const register = async (
 };
 
 export const refreshAccessToken = async () => {
-  const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  const refreshToken = await getStoredToken();
   if (!refreshToken) {
     return null;
   }
@@ -41,18 +38,14 @@ export const refreshAccessToken = async () => {
   return data.accessToken as string;
 };
 
-export const getAuthToken = async () => SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-export const getRefreshToken = async () => SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-
 export const clearTokens = async () => {
-  await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+  await clearStoredTokens();
 };
 
 export const logout = async () => {
   try {
     await api.post(API_ENDPOINTS.auth.logout);
   } finally {
-    await clearTokens();
+    await clearStoredTokens();
   }
 };

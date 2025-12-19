@@ -41,6 +41,22 @@ const initialState: NewsState = {
   loading: false,
   error: null,
   lastFetch: null,
+  feed: {
+    items: [],
+    loading: false,
+    refreshing: false,
+    hasNextPage: false,
+    page: initialPagination.page,
+    error: null,
+  },
+  search: {
+    results: [],
+    loading: false,
+    hasNextPage: false,
+    page: 1,
+    query: undefined,
+    error: null,
+  },
 };
 
 const newsSlice = createSlice({
@@ -114,6 +130,8 @@ const newsSlice = createSlice({
       .addCase(fetchNews.pending, (state) => {
         state.isLoading = true;
         state.loading = true;
+        if (!state.feed) state.feed = { items: [], loading: true, refreshing: false, hasNextPage: false, page: 1, error: null };
+        else state.feed.loading = true;
         state.error = null;
       })
       .addCase(fetchNews.fulfilled, (state, action) => {
@@ -122,11 +140,30 @@ const newsSlice = createSlice({
         state.articles = action.payload.articles;
         state.pagination = action.payload.pagination;
         state.lastFetch = Date.now();
+        const page = action.payload.pagination.page;
+        const limit = action.payload.pagination.limit;
+        const total = action.payload.pagination.total;
+        state.feed = {
+          items: action.payload.articles,
+          loading: false,
+          refreshing: false,
+          page,
+          hasNextPage: page * limit < total,
+          error: null,
+        };
       })
       .addCase(fetchNews.rejected, (state, action) => {
         state.isLoading = false;
         state.loading = false;
-        state.error = action.error.message || 'Unable to fetch news';
+        const payloadMsg = (action.payload as unknown) as string | undefined;
+        const msg = payloadMsg ?? action.error.message ?? 'Unable to fetch news';
+        state.error = msg;
+        if (!state.feed)
+          state.feed = { items: [], loading: false, refreshing: false, hasNextPage: false, page: 1, error: state.error };
+        else {
+          state.feed.loading = false;
+          state.feed.error = state.error;
+        }
       })
       .addCase(fetchArticleDetail.fulfilled, (state, action) => {
         const index = state.articles.findIndex((article) => article.id === action.payload.id);
@@ -148,15 +185,37 @@ const newsSlice = createSlice({
       .addCase(searchNews.pending, (state) => {
         state.isLoading = true;
         state.error = null;
+        if (!state.search) state.search = { results: [], loading: true, hasNextPage: false, page: 1, query: undefined, error: null };
+        else state.search.loading = true;
       })
       .addCase(searchNews.fulfilled, (state, action) => {
         state.isLoading = false;
         state.articles = action.payload.articles;
         state.pagination = action.payload.pagination;
+        const page = action.payload.pagination.page;
+        const limit = action.payload.pagination.limit;
+        const total = action.payload.pagination.total;
+        const query = (action as any).meta?.arg?.query;
+        state.search = {
+          results: action.payload.articles,
+          loading: false,
+          page,
+          hasNextPage: page * limit < total,
+          query,
+          error: null,
+        };
       })
       .addCase(searchNews.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Unable to search news';
+        const payloadMsg = (action.payload as unknown) as string | undefined;
+        const msg = payloadMsg ?? action.error.message ?? 'Unable to search news';
+        state.error = msg;
+        if (!state.search)
+          state.search = { results: [], loading: false, hasNextPage: false, page: 1, query: undefined, error: state.error };
+        else {
+          state.search.loading = false;
+          state.search.error = state.error;
+        }
       })
       .addCase(fetchBookmarked.fulfilled, (state, action) => {
         state.bookmarkedIds = action.payload.bookmarkedIds;

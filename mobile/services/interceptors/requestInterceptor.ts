@@ -1,6 +1,6 @@
 import { AxiosInstance } from 'axios';
 import { Platform } from 'react-native';
-import { getAuthToken } from '../auth';
+import { getAuthToken } from '../tokenStorage';
 import networkManager from '../networkManager';
 import { createCorrelationId, buildDeduplicationKey } from '../../utils/retry';
 import { EnhancedAxiosRequestConfig } from '../../types/api';
