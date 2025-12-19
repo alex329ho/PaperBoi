@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
+    "scheme": "paperboi",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
@@ -14,14 +15,16 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.paperboi.mobile"
+      "bundleIdentifier": "app.paperboi.mobile",
+      "scheme": "paperboi"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "app.paperboi.mobile"
+      "package": "app.paperboi.mobile",
+      "scheme": "paperboi"
     },
     "plugins": [
       ["expo-build-properties", { "android": { "usesCleartextTraffic": false } }],
