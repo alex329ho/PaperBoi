@@ -273,10 +273,14 @@ def integration_app() -> Iterable[IntegrationApp]:
     """Pytest fixture that yields a fully-wired integration environment."""
 
     app_ctx = create_test_app([article_payload(title="AI breakthroughs reshape economy")])
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
         yield app_ctx
     finally:
         app_ctx.cleanup()
+        loop.close()
+        asyncio.set_event_loop(None)
 
 
 def auth_headers(token: str) -> Dict[str, str]:

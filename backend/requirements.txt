@@ -3,7 +3,8 @@
 fastapi==0.115.5
 uvicorn[standard]==0.32.0
 SQLAlchemy==2.0.36
-greenlet==3.0.3
+# greenlet 3.1.x adds Python 3.13 wheels; 3.0.x fails to build on newer runtimes.
+greenlet==3.1.1
 psycopg[binary]==3.3.2
 alembic==1.13.3
 redis==5.1.1
@@ -25,4 +26,3 @@ requests==2.32.3
 email-validator==2.2.0
 Jinja2==3.1.4
 # Removed invalid starlette pin
-

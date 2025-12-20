@@ -13,6 +13,7 @@ class FakeRedis:
         self._decode_responses = decode_responses
         self._data: Dict[str, Any] = {}
         self._sets: Dict[str, Set[Any]] = defaultdict(set)
+        self._lists: Dict[str, list[Any]] = defaultdict(list)
 
     async def get(self, key: str) -> Any:
         return self._data.get(key)
@@ -41,6 +42,30 @@ class FakeRedis:
         before = len(self._sets[key])
         self._sets[key].add(value)
         return 1 if len(self._sets[key]) > before else 0
+
+    async def rpush(self, key: str, *values: Any) -> int:
+        self._lists[key].extend(values)
+        return len(self._lists[key])
+
+    async def lrange(self, key: str, start: int, end: int) -> list[Any]:
+        items = self._lists.get(key, [])
+        if end == -1:
+            end = len(items) - 1
+        return items[start : end + 1]
+
+    async def delete(self, *keys: str) -> int:
+        removed = 0
+        for key in keys:
+            if key in self._data:
+                del self._data[key]
+                removed += 1
+            if key in self._sets:
+                del self._sets[key]
+                removed += 1
+            if key in self._lists:
+                del self._lists[key]
+                removed += 1
+        return removed
 
     async def ping(self) -> bool:
         return True

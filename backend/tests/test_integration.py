@@ -8,8 +8,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-pytest_plugins = ["integration.fixtures"]
-
 from integration.test_scenarios import (  # noqa: E402,F401
     test_news_fetching_filtering_and_error_recovery,
     test_offline_to_online_transition_and_data_consistency,

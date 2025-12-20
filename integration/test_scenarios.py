@@ -109,7 +109,9 @@ def test_offline_to_online_transition_and_data_consistency(integration_app: Inte
     # Seed cached news in redis to simulate offline viewing
     cached_payload = {"articles": integration_app.gdelt_service.responses}
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(integration_app.redis.set("gdelt:cache:offline", json.dumps(cached_payload)))
+    loop.run_until_complete(
+        integration_app.redis.set("gdelt:cache:offline", json.dumps(cached_payload, default=str))
+    )
     offline_news = integration_app.client.get("/api/v1/news")
     assert offline_news.status_code == 200
     assert offline_news.json()["pagination"]["total"] >= 1

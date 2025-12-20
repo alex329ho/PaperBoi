@@ -3,7 +3,7 @@
 This guide explains how to bootstrap the PaperBoi stack (FastAPI backend + Expo mobile app) on macOS, Linux, and Windows. All commands assume repository root.
 
 ## Prerequisites
-- Python 3.11+
+- Python 3.12+ (recommended; some dependencies do not yet support Python 3.14)
 - Node.js 18+
 - npm (bundled with Node.js)
 - Docker & docker-compose
@@ -41,8 +41,8 @@ The scripts will:
    ```
 2. **Python venv + deps**
    ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
+   python3.12 -m venv backend/.venv
+   source backend/.venv/bin/activate
    pip install --upgrade pip
    pip install -r backend/requirements.txt
    ```
@@ -63,7 +63,7 @@ The scripts will:
    ```
 6. **Run backend**
    ```bash
-   source .venv/bin/activate
+   source backend/.venv/bin/activate
    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --app-dir backend
    ```
 7. **Run mobile app**

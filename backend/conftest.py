@@ -7,7 +7,10 @@ This ensures the repository root is on ``sys.path`` so imports using the
 from __future__ import annotations
 
 import sys
+import warnings
 from pathlib import Path
+
+from integration.fixtures import integration_app  # noqa: F401
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -17,3 +20,5 @@ REPO_ROOT = PROJECT_ROOT.parent
 # when tests are executed from inside the ``backend`` directory.
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+warnings.filterwarnings("ignore", message="'crypt' is deprecated", category=DeprecationWarning)

@@ -171,7 +171,16 @@ async def fetch_fresh(
 ) -> Dict[str, Any]:
     """Trigger a GDELT fetch and return normalized articles."""
 
-    articles = await service.fetch_news(body.query, timespan=body.timespan, region=body.region, language=body.language)
+    try:
+        articles = await service.fetch_news(
+            body.query, timespan=body.timespan, region=body.region, language=body.language
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Fresh fetch failed", extra={"error": str(exc)})
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Upstream news provider unavailable",
+        ) from exc
     return envelope(articles, message="Fresh fetch triggered")
 
 

@@ -45,7 +45,7 @@ def validate_email_address(address: str) -> str:
     EmailNotValidError, validate_email = _import_email_validator()
 
     try:
-        return validate_email(address, check_deliverability=False).email
+        return validate_email(address, check_deliverability=False).normalized
     except EmailNotValidError as exc:  # pragma: no cover - exercised via InvalidEmailError
         raise InvalidEmailError(str(exc)) from exc
 
