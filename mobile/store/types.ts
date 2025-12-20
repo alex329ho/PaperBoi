@@ -127,6 +127,7 @@ export type SyncPendingAction = {
   id: string;
   actionType: string;
   args: unknown;
+  originalAction?: any;
   attempt: number;
   critical?: boolean;
   createdAt: number;

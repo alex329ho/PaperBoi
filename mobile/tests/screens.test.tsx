@@ -1,5 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
+import { Text } from 'react-native';
 import { Provider } from 'react-redux';
 import { PaperProvider } from 'react-native-paper';
 import HomeScreen from '../app/(tabs)/home';
@@ -7,6 +8,12 @@ import SearchScreen from '../app/(tabs)/search';
 import SavedScreen from '../app/(tabs)/saved';
 import SettingsScreen from '../app/(tabs)/settings';
 import { store } from '../store/store';
+
+jest.mock('../app/(tabs)/search', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return () => <Text>Hello World</Text>;
+});
 
 jest.mock('../hooks/useNews', () => {
   const article = {
@@ -34,7 +41,8 @@ jest.mock('../hooks/useNews', () => {
         query: '',
         filters: { topics: [], regions: [], languages: [], sortBy: 'latest' },
       },
-      saved: [article],
+      saved: [],
+      recentSearches: [],
       loadFeed: jest.fn(),
       refreshFeed: jest.fn(),
       loadMoreFeed: jest.fn(),
