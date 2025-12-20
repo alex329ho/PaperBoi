@@ -12,7 +12,8 @@ const handleResponse = (response: AxiosResponse) => {
 };
 
 const handleError = async (error: AxiosError) => {
-  const originalRequest = error.config as (EnhancedAxiosRequestConfig & { _retry?: boolean }) | undefined;
+  const originalRequest =
+    error.config as (EnhancedAxiosRequestConfig & { _retry?: boolean }) | undefined;
 
   if (!originalRequest) {
     return Promise.reject(error);
@@ -28,7 +29,7 @@ const handleError = async (error: AxiosError) => {
     originalRequest._retry = true;
     const client = networkManager.getClient();
     if (client) {
-      return (client as any).request(originalRequest);
+      return client(originalRequest);
     }
     return Promise.reject(error);
   }

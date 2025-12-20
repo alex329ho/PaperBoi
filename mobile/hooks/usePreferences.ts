@@ -59,7 +59,7 @@ export const usePreferences = () => {
         dispatch(setSummaryLength(values.summaryLength));
         setPersisted(values);
         setStatus('success');
-      } catch (error) {
+      } catch {
         setStatus('error');
       } finally {
         setSaving(false);

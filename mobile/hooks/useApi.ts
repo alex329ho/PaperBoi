@@ -28,7 +28,7 @@ export const useApi = <T>(
         setState({ data: result, error: null, loading: false });
         return result;
       } catch (error) {
-        const parsedError = parseApiError(error as any);
+        const parsedError = parseApiError(error);
         setState((prev) => ({ ...prev, error: parsedError, loading: false }));
         throw parsedError;
       }

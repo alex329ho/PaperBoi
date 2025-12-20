@@ -2,6 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../services/api';
 import { API_ENDPOINTS } from '../../services/endpoints';
+import { extractApiData } from '../../utils/api';
 import { addPendingAction } from '../slices/syncSlice';
 import { PreferencesState, RootState } from '../types';
 
@@ -31,8 +32,8 @@ export const fetchPreferences = createAsyncThunk<PreferencesState, void, { state
     }
 
     try {
-      const response = await apiClient.get(API_ENDPOINTS.preferences.base);
-      const data = ((response.data as any)?.data ?? response.data) as PreferencesState;
+      const response = await apiClient.get<PreferencesState>(API_ENDPOINTS.preferences.base);
+      const data = extractApiData<PreferencesState>(response.data);
       await AsyncStorage.setItem('paperboi_preferences', JSON.stringify(data));
       return data;
     } catch (error) {
@@ -57,11 +58,11 @@ export const updatePreferences = createAsyncThunk<
     return enqueueWhenOffline(thunkApi, 'preferences/updatePreferences', updates);
   }
 
-    try {
-      const response = await apiClient.put(API_ENDPOINTS.preferences.update, updates);
-      const data = ((response.data as any)?.data ?? response.data) as PreferencesState;
-      await AsyncStorage.setItem('paperboi_preferences', JSON.stringify(data));
-      return data;
+  try {
+    const response = await apiClient.put<PreferencesState>(API_ENDPOINTS.preferences.update, updates);
+    const data = extractApiData<PreferencesState>(response.data);
+    await AsyncStorage.setItem('paperboi_preferences', JSON.stringify(data));
+    return data;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Unexpected error updating preferences';

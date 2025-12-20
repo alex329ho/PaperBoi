@@ -10,13 +10,23 @@ import { loginUser, registerUser } from '../store/thunks/authThunks';
 import { fetchNews, generateSummary } from '../store/thunks/newsThunks';
 import { updatePreferences } from '../store/thunks/preferencesThunks';
 import { RootState } from '../store/types';
+import apiClient from '../services/api';
+
+jest.mock('../services/api', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+  },
+}));
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
 type TestStore = ReturnType<typeof buildStore>;
-const mockFetch = jest.fn();
+const mockApi = apiClient as jest.Mocked<typeof apiClient>;
 
 const buildStore = () =>
   configureStore({
@@ -31,17 +41,16 @@ const buildStore = () =>
       getDefaultMiddleware({ serializableCheck: false, thunk: true }).prepend(syncMiddleware),
   });
 
-const respond = (body: any, status = 200) =>
+const respond = (data: any, status = 200) =>
   Promise.resolve({
-    ok: status >= 200 && status < 300,
+    data,
     status,
-    json: async () => body,
-    text: async () => JSON.stringify(body),
   });
 
 beforeEach(async () => {
-  mockFetch.mockReset();
-  (global as any).fetch = mockFetch;
+  mockApi.get.mockReset();
+  mockApi.post.mockReset();
+  mockApi.put.mockReset();
   await AsyncStorage.clear();
 });
 
@@ -71,23 +80,32 @@ describe('Backend-mobile integration flows', () => {
       publishedAt: new Date().toISOString(),
     };
 
-    mockFetch.mockImplementation((url: string, options: any = {}) => {
+    mockApi.post.mockImplementation((url: string) => {
       if (url.includes('/auth/register') || url.includes('/auth/login')) {
-        return respond({ user, token: 'token-123' });
+        return respond({ data: { user, token: 'token-123' } });
       }
-      if (url.includes('/preferences') && options.method === 'PUT') {
-        return respond(preferencesResponse);
+      if (url.includes('/summarize')) {
+        return respond({ data: { summary: 'This is a generated summary.' } });
       }
+      return respond({});
+    });
+    mockApi.put.mockImplementation((url: string) => {
       if (url.includes('/preferences')) {
-        return respond(preferencesResponse);
+        return respond({ data: preferencesResponse });
       }
-      if (url.includes('/news/') && url.includes('/summarize')) {
-        return respond({ summary: 'This is a generated summary.' });
+      return respond({});
+    });
+    mockApi.get.mockImplementation((url: string) => {
+      if (url.includes('/preferences')) {
+        return respond({ data: preferencesResponse });
       }
-      if (url.includes('/news?')) {
-        return respond({ articles: [article], page: 1, total: 1 });
+      if (url.includes('/news')) {
+        return respond({
+          data: [article],
+          pagination: { total: 1, limit: 5, offset: 0 },
+        });
       }
-      return respond({}, 404);
+      return respond({});
     });
 
     await store.dispatch(registerUser({ email: user.email, password: 'Pass1234!', name: user.name }) as any);
@@ -139,14 +157,20 @@ describe('Backend-mobile integration flows', () => {
       createdAt: new Date().toISOString(),
     };
 
-    mockFetch.mockImplementation((url: string, options: any = {}) => {
-      if (url.includes('/preferences') && options.method === 'PUT') {
-        return respond(preferencesResponse);
+    mockApi.put.mockImplementation((url: string) => {
+      if (url.includes('/preferences')) {
+        return respond({ data: preferencesResponse });
       }
-      if (url.includes('/news?')) {
-        return respond({ articles: [article], page: 1, total: 1 });
+      return respond({});
+    });
+    mockApi.get.mockImplementation((url: string) => {
+      if (url.includes('/news')) {
+        return respond({
+          data: [article],
+          pagination: { total: 1, limit: 5, offset: 0 },
+        });
       }
-      return respond({}, 200);
+      return respond({});
     });
 
     store.dispatch(setNetwork('offline'));
@@ -158,15 +182,15 @@ describe('Backend-mobile integration flows', () => {
     );
 
     expect(store.getState().sync.pendingActions.length).toBeGreaterThanOrEqual(2);
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockApi.get).not.toHaveBeenCalled();
 
     store.dispatch(setNetwork('online'));
     await new Promise((resolve) => setTimeout(resolve, 60));
 
     expect(store.getState().sync.pendingActions.length).toBe(0);
-    expect(mockFetch).toHaveBeenCalledWith(
+    expect(mockApi.put).toHaveBeenCalledWith(
       expect.stringContaining('/preferences'),
-      expect.objectContaining({ method: 'PUT' }),
+      expect.objectContaining({ topics: ['queued'], regions: ['CA'], languages: ['en'] }),
     );
     expect(store.getState().news.articles).toHaveLength(1);
   });

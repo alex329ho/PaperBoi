@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+type DependencyList = ReadonlyArray<unknown>;
+
 interface AsyncState<T> {
   data: T | null;
   error: unknown;
@@ -11,7 +13,7 @@ interface AsyncState<T> {
  */
 export const useAsyncData = <T>(
   fetcher: (signal?: AbortSignal) => Promise<T>,
-  deps: any[] = [],
+  deps: DependencyList = [],
 ) => {
   const [state, setState] = useState<AsyncState<T>>({ data: null, error: null, loading: false });
   const abortController = useRef<AbortController | null>(null);

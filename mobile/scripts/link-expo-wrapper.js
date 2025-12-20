@@ -13,7 +13,7 @@ require('${wrapperPath.replace(/\\/g, '\\\\')}');
 let resolvedExpoCli;
 try {
   resolvedExpoCli = require.resolve('@expo/cli/build/bin/cli', { paths: [path.join(__dirname, '..')] });
-} catch (error) {
+} catch {
   // If it fails, we still want to write the wrapper to .bin so that npx can find it.
 }
 

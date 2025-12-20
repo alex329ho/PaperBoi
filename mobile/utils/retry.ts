@@ -7,7 +7,7 @@ export function computeBackoffDelay(attempt: number, base = 300): number {
 
 export async function retryWithBackoff<T>(fn: () => Promise<T>, retries = 5): Promise<T> {
   let attempt = 0;
-  while (true) {
+  while (attempt <= retries) {
     try {
       return await fn();
     } catch (err) {
@@ -18,6 +18,7 @@ export async function retryWithBackoff<T>(fn: () => Promise<T>, retries = 5): Pr
       await new Promise((res) => setTimeout(res, delay));
     }
   }
+  throw new Error('Retry attempts exhausted');
 }
 import { AxiosRequestConfig } from 'axios';
 import { EnhancedAxiosRequestConfig } from '../types/api';

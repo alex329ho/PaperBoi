@@ -64,7 +64,7 @@ The scripts will:
 6. **Run backend**
    ```bash
    source backend/.venv/bin/activate
-   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --app-dir backend
+   uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
    ```
 7. **Run mobile app**
    ```bash

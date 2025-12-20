@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process');
-const path = require('path');
 const envinfo = require('envinfo');
 const { ensureSupportedNode } = require('./ensure-supported-node');
 const fs = require('fs');
@@ -34,7 +33,7 @@ async function printInfo() {
 function resolveLocalExpoCli() {
   try {
     return require.resolve('@expo/cli/build/bin/cli');
-  } catch (error) {
+  } catch {
     return null;
   }
 }

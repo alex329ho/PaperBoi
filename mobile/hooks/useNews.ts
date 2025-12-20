@@ -85,7 +85,7 @@ export const useNews = () => {
     const message = `${article.title}\n${article.url ?? ''}`.trim();
     try {
       await Share.share({ message, title: article.title });
-    } catch (error) {
+    } catch {
       Alert.alert('Unable to share article');
     }
   }, []);

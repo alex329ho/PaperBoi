@@ -3,20 +3,20 @@ import { AxiosInstance } from 'axios';
 import { EnhancedAxiosRequestConfig } from '../types/api';
 
 class SimpleEventEmitter {
-  private listeners: Record<string, Array<(...args: any[]) => void>> = {};
+  private listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
 
-  on(event: string, listener: (...args: any[]) => void) {
+  on(event: string, listener: (...args: unknown[]) => void) {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
     }
     this.listeners[event].push(listener);
   }
 
-  removeListener(event: string, listener: (...args: any[]) => void) {
+  removeListener(event: string, listener: (...args: unknown[]) => void) {
     this.listeners[event] = (this.listeners[event] || []).filter((cb) => cb !== listener);
   }
 
-  emit(event: string, ...args: any[]) {
+  emit(event: string, ...args: unknown[]) {
     (this.listeners[event] || []).forEach((listener) => listener(...args));
   }
 }

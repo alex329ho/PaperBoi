@@ -195,7 +195,7 @@ const newsSlice = createSlice({
         const page = action.payload.pagination.page;
         const limit = action.payload.pagination.limit;
         const total = action.payload.pagination.total;
-        const query = (action as any).meta?.arg?.query;
+        const query = action.meta.arg.query;
         state.search = {
           results: action.payload.articles,
           loading: false,

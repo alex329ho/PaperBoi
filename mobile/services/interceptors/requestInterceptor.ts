@@ -1,4 +1,4 @@
-import { AxiosInstance } from 'axios';
+import { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
 import { getAuthToken } from '../tokenStorage';
 import networkManager from '../networkManager';
@@ -8,7 +8,7 @@ import { EnhancedAxiosRequestConfig } from '../../types/api';
 const shouldLog = __DEV__;
 
 export const attachRequestInterceptor = (client: AxiosInstance) => {
-  client.interceptors.request.use(async (config: EnhancedAxiosRequestConfig) => {
+  client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     const updatedConfig = { ...config } as EnhancedAxiosRequestConfig;
     const token = await getAuthToken();
 
@@ -30,7 +30,8 @@ export const attachRequestInterceptor = (client: AxiosInstance) => {
         if (shouldLog) {
           console.log('[API] Queuing request while offline', updatedConfig.url);
         }
-        return networkManager.queueRequest(updatedConfig);
+        const queuedConfig = await networkManager.queueRequest(updatedConfig);
+        return queuedConfig as InternalAxiosRequestConfig;
       }
     }
 
@@ -45,7 +46,7 @@ export const attachRequestInterceptor = (client: AxiosInstance) => {
       console.log('[API] Request', updatedConfig.method, updatedConfig.url, updatedConfig.params || updatedConfig.data);
     }
 
-    return updatedConfig;
+    return updatedConfig as InternalAxiosRequestConfig;
   });
 };
 

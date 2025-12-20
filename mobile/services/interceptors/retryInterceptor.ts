@@ -30,11 +30,17 @@ export const attachRetryInterceptor = (client: AxiosInstance, options?: { retrie
 
   client.interceptors.response.use(
     async (response) => {
-      const retryAttempt = await attemptRetry(response.config as any, response.status);
+      const retryAttempt = await attemptRetry(
+        response.config as EnhancedAxiosRequestConfig,
+        response.status,
+      );
       return retryAttempt ?? response;
     },
     async (error: AxiosError) => {
-      const retryAttempt = await attemptRetry(error.config as any, error.response?.status);
+      const retryAttempt = await attemptRetry(
+        error.config as EnhancedAxiosRequestConfig,
+        error.response?.status,
+      );
       if (retryAttempt) return retryAttempt;
       return Promise.reject(error);
     },

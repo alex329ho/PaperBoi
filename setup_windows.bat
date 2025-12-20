@@ -28,6 +28,6 @@ docker-compose up -d db cache
 echo Setup complete!
 echo - Activate backend venv: .venv\\Scripts\\activate
 
-echo - Start API locally: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --app-dir backend
+echo - Start API locally: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 echo - Start Expo app: cd mobile && npm start

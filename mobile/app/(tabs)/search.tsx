@@ -190,7 +190,7 @@ const SearchScreen = () => {
         <LoadingSkeletons />
       ) : hasNoResults ? (
         <View style={{ padding: 24, alignItems: 'center' }}>
-          <Text>No results for "{query}". Try adjusting filters.</Text>
+          <Text>No results for &quot;{query}&quot;. Try adjusting filters.</Text>
         </View>
       ) : null}
     </View>

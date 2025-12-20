@@ -47,6 +47,6 @@ docker-compose up -d db cache
 cat <<'MSG'
 Setup complete!
 - Activate backend venv: source .venv/bin/activate
-- Start API locally: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --app-dir backend
+- Start API locally: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 - Start Expo app: cd mobile && npm start
 MSG

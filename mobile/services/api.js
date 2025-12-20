@@ -2,7 +2,7 @@ const axios = require('axios');
 const Constants = (() => {
   try {
     return require('expo-constants');
-  } catch (e) {
+  } catch {
     return { expoConfig: {}, manifest: {} };
   }
 })();

@@ -2,6 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../services/api';
 import { API_ENDPOINTS } from '../../services/endpoints';
+import { extractApiData, extractPagination } from '../../utils/api';
 import { addPendingAction } from '../slices/syncSlice';
 import { Article, FilterState, PaginationState, RootState } from '../types';
 
@@ -28,10 +29,16 @@ const enqueueWhenOffline = async (
   return thunkApi.rejectWithValue('offline');
 };
 
+const DEFAULT_HOURS = 168;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
 const toCsv = (values?: string[]) =>
   values && values.length ? values.join(',') : undefined;
 
 const buildListParams = (filter: FilterState, page: number, limit: number) => ({
+  hours: DEFAULT_HOURS,
   offset: Math.max(0, (page - 1) * limit),
   limit,
   sort: filter.sortBy,
@@ -65,23 +72,37 @@ export const fetchNews = createAsyncThunk<
   const page = params.page ?? state.news.pagination.page;
   const limit = params.limit ?? state.news.pagination.limit;
   try {
-    const response = await apiClient.get(API_ENDPOINTS.news.list, {
+    const response = await apiClient.get<unknown>(API_ENDPOINTS.news.list, {
       params: buildListParams(filter, page, limit),
     });
-    const payload = (response.data as any)?.data ?? response.data;
-    const pagination = (response.data as any)?.pagination ?? payload?.pagination;
-    const articles = Array.isArray(payload) ? payload : payload.articles;
-    const limitFromApi = pagination?.limit ?? payload?.limit ?? limit;
-    const offsetFromApi = pagination?.offset ?? payload?.offset;
+    const responseData = response.data;
+    const payload = extractApiData<unknown>(responseData);
+    const pagination = extractPagination(responseData);
+    const articles = Array.isArray(payload)
+      ? (payload as Article[])
+      : isRecord(payload) && Array.isArray(payload.articles)
+        ? (payload.articles as Article[])
+        : [];
+    const limitFromApi =
+      pagination?.limit ??
+      (isRecord(payload) && typeof payload.limit === 'number' ? payload.limit : undefined) ??
+      limit;
+    const offsetFromApi =
+      pagination?.offset ??
+      (isRecord(payload) && typeof payload.offset === 'number' ? payload.offset : undefined);
     const pageFromApi =
       typeof offsetFromApi === 'number' && typeof limitFromApi === 'number'
         ? Math.floor(offsetFromApi / limitFromApi) + 1
-        : payload?.page ?? page;
+        : (isRecord(payload) && typeof payload.page === 'number' ? payload.page : page);
     return {
       articles: (articles ?? []) as Article[],
       pagination: {
         page: pageFromApi,
-        total: pagination?.total ?? payload?.total ?? articles?.length ?? 0,
+        total:
+          pagination?.total ??
+          (isRecord(payload) && typeof payload.total === 'number' ? payload.total : undefined) ??
+          articles.length ??
+          0,
         limit: limitFromApi,
       },
     };
@@ -100,9 +121,9 @@ export const fetchArticleDetail = createAsyncThunk<Article, string, { state: Roo
     }
 
     try {
-      const response = await apiClient.get(API_ENDPOINTS.news.detail(articleId));
-      const payload = (response.data as any)?.data ?? response.data;
-      return payload as Article;
+      const response = await apiClient.get<unknown>(API_ENDPOINTS.news.detail(articleId));
+      const payload = extractApiData<Article>(response.data);
+      return payload;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unexpected error fetching article';
       return thunkApi.rejectWithValue(message);
@@ -123,8 +144,12 @@ export const generateSummary = createAsyncThunk<
     const response = await apiClient.post(API_ENDPOINTS.news.detail(articleId) + '/summarize', {
       length,
     });
-    const payload = (response.data as any)?.data ?? response.data;
-    const summary = payload?.summary ?? payload?.summary_text ?? payload?.summaryText;
+    const payload = extractApiData<Record<string, unknown>>(response.data);
+    const summary =
+      (typeof payload.summary === 'string' && payload.summary) ||
+      (typeof payload.summary_text === 'string' && payload.summary_text) ||
+      (typeof payload.summaryText === 'string' && payload.summaryText) ||
+      '';
     return { id: articleId, summary: summary as string };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected error generating summary';
@@ -149,15 +174,28 @@ export const searchNews = createAsyncThunk<
       startDate,
       endDate,
     );
-    const response = await apiClient.post(API_ENDPOINTS.news.search, payload);
-    const payloadData = (response.data as any)?.data ?? response.data;
-    const articles = Array.isArray(payloadData) ? payloadData : payloadData.articles;
+    const response = await apiClient.post<unknown>(API_ENDPOINTS.news.search, payload);
+    const payloadData = extractApiData<unknown>(response.data);
+    const articles = Array.isArray(payloadData)
+      ? (payloadData as Article[])
+      : isRecord(payloadData) && Array.isArray(payloadData.articles)
+        ? (payloadData.articles as Article[])
+        : [];
     return {
       articles: (articles ?? []) as Article[],
       pagination: {
-        page: payloadData.page ?? 1,
-        total: payloadData.total ?? articles?.length ?? 0,
-        limit: payloadData.limit ?? getState().news.pagination.limit,
+        page:
+          (isRecord(payloadData) && typeof payloadData.page === 'number'
+            ? payloadData.page
+            : 1),
+        total:
+          (isRecord(payloadData) && typeof payloadData.total === 'number'
+            ? payloadData.total
+            : undefined) ?? articles.length ?? 0,
+        limit:
+          (isRecord(payloadData) && typeof payloadData.limit === 'number'
+            ? payloadData.limit
+            : undefined) ?? getState().news.pagination.limit,
       },
     };
   } catch (error) {

@@ -1,4 +1,5 @@
-import { Middleware } from '@reduxjs/toolkit';
+import { AnyAction, Middleware } from '@reduxjs/toolkit';
+import type { ThunkDispatch } from 'redux-thunk';
 import { fetchArticleDetail, fetchNews, generateSummary, searchNews } from '../thunks/newsThunks';
 import { fetchPreferences, updatePreferences } from '../thunks/preferencesThunks';
 import { loginUser, logoutUser, refreshToken, registerUser } from '../thunks/authThunks';
@@ -12,7 +13,15 @@ import {
 } from '../slices/syncSlice';
 import { RootState, SyncPendingAction } from '../types';
 
-const offlineActionCreators: Record<string, any> = {};
+type OfflineActionCreator = ((...args: unknown[]) => unknown) & { typePrefix?: string };
+type ThunkResult = { meta?: { requestStatus?: string }; error?: { message?: string } };
+type ActionWithArgs = { arg?: unknown; payload?: unknown; typePrefix?: string; name?: string };
+
+const offlineActionCreators: Record<string, OfflineActionCreator> = {};
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+const isReduxAction = (value: unknown): value is { type: string; payload?: unknown } =>
+  isRecord(value) && typeof value.type === 'string';
 
 const registerOfflineActions = () => {
   const actions = [
@@ -40,7 +49,8 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const MAX_RETRIES = 5;
 
-const syncMiddleware: Middleware = (storeApi) => {
+const syncMiddleware: Middleware<Record<string, never>, RootState> = (storeApi) => {
+  const dispatch = storeApi.dispatch as ThunkDispatch<RootState, unknown, AnyAction>;
   let processing = false;
 
   const processQueue = async () => {
@@ -56,7 +66,10 @@ const syncMiddleware: Middleware = (storeApi) => {
       if (storeApi.getState().ui.networkStatus === 'offline') {
         break;
       }
-      const actionCreator = pending.originalAction ?? offlineActionCreators[pending.actionType];
+      const actionCreator =
+        typeof pending.originalAction === 'function'
+          ? (pending.originalAction as OfflineActionCreator)
+          : offlineActionCreators[pending.actionType];
       if (!actionCreator) {
         storeApi.dispatch(removePendingAction(pending.id));
         continue;
@@ -67,9 +80,9 @@ const syncMiddleware: Middleware = (storeApi) => {
           typeof actionCreator === 'function' && actionCreator.typePrefix
             ? actionCreator(pending.args)
             : actionCreator;
-        const result = await storeApi.dispatch(actionToDispatch as any);
-        const status = (result as any)?.meta?.requestStatus;
-        const errorMessage = (result as any)?.error?.message as string | undefined;
+        const result = (await dispatch(actionToDispatch as AnyAction)) as ThunkResult;
+        const status = result.meta?.requestStatus;
+        const errorMessage = result.error?.message;
         if (status === 'fulfilled') {
           storeApi.dispatch(removePendingAction(pending.id));
           storeApi.dispatch(setLastSync(Date.now()));
@@ -107,15 +120,16 @@ const syncMiddleware: Middleware = (storeApi) => {
     processing = false;
   };
 
-  return (next) => (action: any) => {
+  return (next) => (action: unknown) => {
     const state = storeApi.getState();
     if (typeof action === 'function' && state.ui.networkStatus === 'offline') {
-      const typePrefix = (action as any).typePrefix || action.name || 'anonymousThunk';
+      const actionWithArgs = action as ActionWithArgs;
+      const typePrefix = actionWithArgs.typePrefix || actionWithArgs.name || 'anonymousThunk';
       const uniqueId = `${typePrefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       const pendingAction: SyncPendingAction = {
         id: uniqueId,
         actionType: typePrefix,
-        args: (action as any).arg ?? (action as any).payload,
+        args: actionWithArgs.arg ?? actionWithArgs.payload,
         originalAction: action,
         attempt: 0,
         createdAt: Date.now(),
@@ -125,13 +139,13 @@ const syncMiddleware: Middleware = (storeApi) => {
       return Promise.resolve();
     }
 
-    const result = next(action);
+    const result = next(action as AnyAction);
 
-    if (action.type === 'ui/setNetwork' && action.payload === 'online') {
+    if (isReduxAction(action) && action.type === 'ui/setNetwork' && action.payload === 'online') {
       processQueue();
     }
 
-    if (action.type === addPendingAction.type) {
+    if (isReduxAction(action) && action.type === addPendingAction.type) {
       processQueue();
     }
 

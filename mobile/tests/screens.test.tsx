@@ -1,6 +1,5 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { Text } from 'react-native';
 import { Provider } from 'react-redux';
 import { PaperProvider } from 'react-native-paper';
 import HomeScreen from '../app/(tabs)/home';
@@ -9,10 +8,26 @@ import SavedScreen from '../app/(tabs)/saved';
 import SettingsScreen from '../app/(tabs)/settings';
 import { store } from '../store/store';
 
+jest.mock('redux-persist', () => {
+  const actual = jest.requireActual('redux-persist');
+  return {
+    ...actual,
+    persistReducer: (_config: unknown, reducer: any) => reducer,
+    persistStore: () => ({
+      purge: jest.fn(),
+      flush: jest.fn(),
+      pause: jest.fn(),
+      persist: jest.fn(),
+    }),
+  };
+});
+
 jest.mock('../app/(tabs)/search', () => {
   const React = require('react');
   const { Text } = require('react-native');
-  return () => <Text>Hello World</Text>;
+  const MockSearchScreen = () => <Text>Hello World</Text>;
+  MockSearchScreen.displayName = 'MockSearchScreen';
+  return MockSearchScreen;
 });
 
 jest.mock('../hooks/useNews', () => {
@@ -79,6 +94,13 @@ jest.mock('../hooks/usePreferences', () => ({
 }));
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jest.fn() }) }));
+
+jest.useFakeTimers();
+
+afterEach(() => {
+  jest.runOnlyPendingTimers();
+  jest.clearAllTimers();
+});
 
 const renderWithProviders = (component: React.ReactElement) =>
   render(

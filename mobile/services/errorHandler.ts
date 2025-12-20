@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import { ApiError } from '../types/api';
+import { ApiError, EnhancedAxiosRequestConfig } from '../types/api';
 
 const networkErrorCodes = new Set(['ECONNABORTED', 'ENOTFOUND', 'ERR_NETWORK']);
 
@@ -13,13 +13,24 @@ const statusMessages: Record<number, string> = {
   503: 'Service temporarily unavailable. Please try later.',
 };
 
-export const parseApiError = (error: AxiosError | Error): ApiError => {
-  if ((error as AxiosError).isAxiosError) {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const isAxiosError = (error: unknown): error is AxiosError =>
+  isRecord(error) && error.isAxiosError === true;
+
+export const parseApiError = (error: unknown): ApiError => {
+  if (isAxiosError(error)) {
     const axiosError = error as AxiosError;
     const status = axiosError.response?.status;
-    const messageFromServer = (axiosError.response?.data as any)?.message as string | undefined;
+    const responseData = axiosError.response?.data;
+    const messageFromServer =
+      isRecord(responseData) && typeof responseData.message === 'string'
+        ? responseData.message
+        : undefined;
     const isOffline =
       networkErrorCodes.has(axiosError.code || '') || axiosError.message === 'Network Error';
+    const config = axiosError.config as EnhancedAxiosRequestConfig | undefined;
 
     return {
       message:
@@ -31,12 +42,20 @@ export const parseApiError = (error: AxiosError | Error): ApiError => {
       isOffline,
       url: axiosError.config?.url,
       method: axiosError.config?.method,
-      correlationId: (axiosError.config as any)?.meta?.correlationId,
+      correlationId: config?.meta?.correlationId,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      code: 'UNKNOWN',
+      isOffline: false,
     };
   }
 
   return {
-    message: error.message,
+    message: 'Unexpected error occurred.',
     code: 'UNKNOWN',
     isOffline: false,
   };

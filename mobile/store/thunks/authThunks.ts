@@ -2,6 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../services/api';
 import { API_ENDPOINTS } from '../../services/endpoints';
+import { extractApiData } from '../../utils/api';
 import { addPendingAction } from '../slices/syncSlice';
 import { RootState, UserProfile } from '../types';
 
@@ -45,8 +46,8 @@ export const loginUser = createAsyncThunk<AuthResponse, Credentials, { state: Ro
     }
 
     try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.login, credentials);
-      const data = ((response.data as any)?.data ?? response.data) as AuthResponse;
+      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.auth.login, credentials);
+      const data = extractApiData<AuthResponse>(response.data);
       await AsyncStorage.setItem('paperboi_token', data.token);
       await AsyncStorage.setItem('paperboi_user', JSON.stringify(data.user));
       return data;
@@ -66,8 +67,8 @@ export const registerUser = createAsyncThunk<AuthResponse, RegisterPayload, { st
     }
 
     try {
-      const response = await apiClient.post(API_ENDPOINTS.auth.register, payload);
-      const data = ((response.data as any)?.data ?? response.data) as AuthResponse;
+      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.auth.register, payload);
+      const data = extractApiData<AuthResponse>(response.data);
       await AsyncStorage.setItem('paperboi_token', data.token);
       await AsyncStorage.setItem('paperboi_user', JSON.stringify(data.user));
       return data;
@@ -94,7 +95,7 @@ export const refreshToken = createAsyncThunk<AuthResponse, void, { state: RootSt
         {},
         { headers: { Authorization: `Bearer ${currentToken}` } },
       );
-      const data = ((response.data as any)?.data ?? response.data) as AuthResponse;
+      const data = extractApiData<AuthResponse>(response.data);
       await AsyncStorage.setItem('paperboi_token', data.token);
       if (data.user) {
         await AsyncStorage.setItem('paperboi_user', JSON.stringify(data.user));

@@ -5,7 +5,7 @@ module.exports = function (api) {
   try {
     require.resolve('react-native-reanimated/plugin');
     plugins.push('react-native-reanimated/plugin');
-  } catch (error) {
+  } catch {
     // Allow tests to run even if the reanimated plugin is unavailable in the environment.
   }
 

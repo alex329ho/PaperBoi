@@ -70,10 +70,10 @@ export const sendEmailSummary = async (payload: { range: string }) =>
   apiClient.post<ApiResponse<{ status: string }>>(API_ENDPOINTS.email.sendSummary, payload);
 
 export const getEmailHistory = async () =>
-  apiClient.get<ApiResponse<any[]>>(API_ENDPOINTS.email.history);
+  apiClient.get<ApiResponse<unknown[]>>(API_ENDPOINTS.email.history);
 
 // Backwards compatibility for existing code paths
 export const fetchTopStories = async () => {
   const response = await fetchNews({ category: 'top' });
-  return (response as ApiResponse<NewsArticle[]>).data;
+  return response.data.data;
 };

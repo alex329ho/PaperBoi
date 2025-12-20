@@ -24,7 +24,7 @@ const BACKEND_TOKEN_ENDPOINT = '/preferences/device-token';
 const getFirebaseConfig = () => {
   const extra =
     Constants.expoConfig?.extra ||
-    (Constants as unknown as { manifest?: { extra?: Record<string, any> } }).manifest?.extra ||
+    (Constants as unknown as { manifest?: { extra?: Record<string, unknown> } }).manifest?.extra ||
     {};
   if (Platform.OS === 'ios' && extra.firebaseIos) {
     return extra.firebaseIos;

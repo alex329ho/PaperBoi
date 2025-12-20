@@ -47,37 +47,6 @@ declare module 'react' {
   export class Component<P = {}, S = {}> extends React.Component<P, S> {}
 }
 
-type JestMockFn = ((...args: any[]) => any) & {
-  mockResolvedValue?: (...args: any[]) => any;
-  mockRejectedValue?: (...args: any[]) => any;
-  mockReturnValue?: (...args: any[]) => any;
-  mockReturnValueOnce?: (...args: any[]) => any;
-  mockClear?: () => void;
-  mockImplementation?: (...args: any[]) => any;
-};
-
-declare const jest: {
-  fn<T extends (...args: any[]) => any>(implementation?: T): JestMockFn & T;
-  mock(moduleName: string, factory?: any): void;
-  Mocked<T>(item: T): jest.Mocked<T>;
-  requireActual(moduleName: string): any;
-  clearAllMocks(): void;
-};
-declare function describe(name: string, fn: () => void): void;
-declare function it(name: string, fn: () => any): void;
-declare function expect(actual: any): any;
-declare function beforeEach(fn: () => any | Promise<any>): void;
-declare function afterEach(fn: () => any | Promise<any>): void;
-declare function beforeAll(fn: () => any | Promise<any>): void;
-declare function afterAll(fn: () => any | Promise<any>): void;
-
-declare namespace jest {
-  type Mocked<T> = T & { [K in keyof T]: any };
-  type MockedFunction<T extends (...args: any[]) => any> = (
-    ...args: Parameters<T>
-  ) => ReturnType<T>;
-}
-
 interface ProcessEnv {
   EXPO_PUBLIC_API_BASE_URL?: string;
   EXPO_PUBLIC_API_TIMEOUT?: string;
@@ -119,86 +88,6 @@ declare module 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 declare module 'redux-persist/es/types';
 declare module 'reselect';
 
-declare module 'react-redux' {
-  export type TypedUseSelectorHook<TState> = <TSelected>(
-    selector: (state: TState) => TSelected,
-  ) => TSelected;
-  export function useDispatch<T = any>(): T;
-  export function useSelector<TSelected>(selector: (state: any) => TSelected): TSelected;
-  export const Provider: React.FC<{ store: any; children?: React.ReactNode }>;
-}
-
-declare module '@reduxjs/toolkit' {
-  export type PayloadAction<T = any> = { type: string; payload: T };
-  export type AnyAction = PayloadAction<any>;
-  export type Middleware = any;
-  export function createSlice(options: any): any;
-  export function configureStore(options: any): any;
-  export function combineReducers(reducers: any): any;
-  export function createAsyncThunk<
-    Returned,
-    ThunkArg = void,
-    ThunkApiConfig extends { state?: unknown } = {},
-  >(
-    typePrefix: string,
-    payloadCreator: (
-      arg: ThunkArg,
-      thunkApi: {
-        dispatch: any;
-        getState: () => ThunkApiConfig['state'];
-        rejectWithValue: (value: any) => any;
-      },
-    ) => Promise<Returned> | Returned,
-  ): any;
-}
-declare module '@reduxjs/toolkit/query';
-declare module '@reduxjs/toolkit/query/react';
-declare module 'redux-persist/lib/storage';
-declare module 'axios' {
-  export interface AxiosRequestConfig {
-    url?: string;
-    method?: string;
-    headers?: Record<string, any>;
-    params?: any;
-    data?: any;
-    timeout?: number;
-    [key: string]: any;
-  }
-
-  export interface AxiosResponse<T = any> {
-    data: T;
-    status: number;
-    statusText?: string;
-    headers?: Record<string, any>;
-    config: AxiosRequestConfig;
-  }
-
-  export interface AxiosError<T = any> extends Error {
-    config: AxiosRequestConfig;
-    response?: AxiosResponse<T>;
-    isAxiosError: boolean;
-    code?: string;
-    name?: string;
-  }
-
-  export interface AxiosInstance {
-    (config: AxiosRequestConfig): Promise<any>;
-    get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>;
-    post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
-    put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
-    interceptors: {
-      request: { use: (...args: any[]) => any };
-      response: { use: (...args: any[]) => any };
-    };
-    defaults: AxiosRequestConfig;
-  }
-
-  const axios: {
-    create(config?: AxiosRequestConfig): AxiosInstance;
-  };
-
-  export default axios;
-}
 declare module '@expo/vector-icons';
 
 declare module '@react-native-community/netinfo' {
