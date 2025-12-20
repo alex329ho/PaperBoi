@@ -6,9 +6,10 @@ import { Appbar, Banner, Chip, SegmentedButtons, Text, useTheme } from 'react-na
 import NewsList from '../../components/news/NewsList';
 import LoadingSkeletons from '../../components/common/LoadingSkeletons';
 import OfflineBanner from '../../components/common/OfflineBanner';
+import SectionRibbon from '../../components/news/SectionRibbon';
 import { useNews } from '../../hooks/useNews';
 
-const topicOptions = ['Technology', 'Business', 'Science', 'Health'];
+const sectionOptions = ['Today', 'Trending', 'Technology', 'Business', 'Science', 'Health', 'Saved'];
 const regionOptions = ['US', 'Europe', 'Asia', 'Global'];
 const languageOptions = ['en', 'es', 'fr'];
 
@@ -27,7 +28,8 @@ const HomeScreen = () => {
     shareArticle,
   } = useNews();
 
-  const [topics, setTopics] = useState<string[]>(['Technology']);
+  const [activeSection, setActiveSection] = useState('Today');
+  const [topics, setTopics] = useState<string[]>([]);
   const [regions, setRegions] = useState<string[]>(['US']);
   const [languages, setLanguages] = useState<string[]>(['en']);
   const [sortBy, setSortBy] = useState<'recent' | 'trending' | 'relevance'>('recent');
@@ -57,6 +59,26 @@ const HomeScreen = () => {
     setter(list.includes(value) ? list.filter((item) => item !== value) : [...list, value]);
   };
 
+  const handleSectionSelect = (section: string) => {
+    if (section === 'Saved') {
+      router.push('/(tabs)/saved');
+      return;
+    }
+    setActiveSection(section);
+    if (section === 'Trending') {
+      setSortBy('trending');
+      setTopics([]);
+      return;
+    }
+    if (section === 'Today') {
+      setSortBy('recent');
+      setTopics([]);
+      return;
+    }
+    setSortBy('recent');
+    setTopics([section]);
+  };
+
   const applyFilters = () =>
     loadFeed({
       page: 1,
@@ -71,9 +93,14 @@ const HomeScreen = () => {
   const networkLabel = networkStatus?.isConnected ? 'Online' : 'Offline';
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <Appbar.Header>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <Appbar.Header style={{ backgroundColor: colors.surface }}>
         <Appbar.Content title="PaperBoi" subtitle="Daily briefings" />
+        <Appbar.Action
+          icon="magnify"
+          accessibilityLabel="Search articles"
+          onPress={() => router.push('/(tabs)/search')}
+        />
         <Appbar.Action icon="tune" accessibilityLabel="Open filters" onPress={applyFilters} />
         <Appbar.Action
           icon="cog"
@@ -93,21 +120,17 @@ const HomeScreen = () => {
 
       <OfflineBanner />
 
-      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 }}>
-        <Text variant="titleSmall" style={{ marginBottom: 6 }}>
-          Active filters ({networkLabel})
+      <SectionRibbon
+        sections={sectionOptions}
+        activeSection={activeSection}
+        onSelect={handleSectionSelect}
+      />
+
+      <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+        <Text variant="titleSmall" style={{ marginBottom: 8, color: colors.onSurfaceVariant }}>
+          Filters ({networkLabel})
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {topicOptions.map((topic) => (
-            <Chip
-              key={topic}
-              icon="tag"
-              selected={topics.includes(topic)}
-              onPress={() => toggleValue(topic, topics, setTopics)}
-            >
-              {topic}
-            </Chip>
-          ))}
           {regionOptions.map((region) => (
             <Chip
               key={region}
@@ -128,10 +151,19 @@ const HomeScreen = () => {
               {lang.toUpperCase()}
             </Chip>
           ))}
+          {topics.length ? (
+            <Chip icon="tag" onPress={() => setTopics([])}>
+              {topics.join(', ')}
+            </Chip>
+          ) : (
+            <Chip icon="tag" onPress={() => setTopics([])}>
+              All topics
+            </Chip>
+          )}
         </View>
       </View>
 
-      <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
         <SegmentedButtons
           value={sortBy}
           onValueChange={(value) => setSortBy(value as typeof sortBy)}

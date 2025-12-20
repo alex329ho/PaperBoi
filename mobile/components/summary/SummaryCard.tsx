@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Card, Text, Button } from 'react-native-paper';
+import { Card, Text, Button, useTheme } from 'react-native-paper';
 
 interface SummaryCardProps {
   title: string;
@@ -8,6 +8,7 @@ interface SummaryCardProps {
 }
 
 const SummaryCard: React.FC<SummaryCardProps> = ({ title, summary, expandable = true }) => {
+  const { colors } = useTheme();
   const [expanded, setExpanded] = useState(false);
   const content = useMemo(() => {
     if (!expandable) return summary;
@@ -16,7 +17,10 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, summary, expandable = 
   }, [expandable, expanded, summary]);
 
   return (
-    <Card style={{ marginBottom: 12 }}>
+    <Card
+      mode="outlined"
+      style={{ marginBottom: 12, backgroundColor: colors.surface, borderColor: colors.outline }}
+    >
       <Card.Title title={title} />
       <Card.Content>
         <Text selectable accessibilityRole="text">
