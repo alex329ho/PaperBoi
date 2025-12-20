@@ -1,9 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '../../services/api';
+import { API_ENDPOINTS } from '../../services/endpoints';
 import { addPendingAction } from '../slices/syncSlice';
 import { Article, FilterState, PaginationState, RootState } from '../types';
-
-const API_BASE_URL = 'https://api.paperboi.app';
 
 const persistBookmarks = async (ids: string[]) => {
   await AsyncStorage.setItem('paperboi_bookmarks', JSON.stringify(ids));
@@ -28,6 +28,28 @@ const enqueueWhenOffline = async (
   return thunkApi.rejectWithValue('offline');
 };
 
+const toCsv = (values?: string[]) =>
+  values && values.length ? values.join(',') : undefined;
+
+const buildListParams = (filter: FilterState, page: number, limit: number) => ({
+  offset: Math.max(0, (page - 1) * limit),
+  limit,
+  sort: filter.sortBy,
+  topics: toCsv(filter.topics),
+  regions: toCsv(filter.regions),
+  languages: toCsv(filter.languages),
+});
+
+const buildSearchPayload = (query: string, filter: FilterState, startDate?: string, endDate?: string) => ({
+  query,
+  topics: filter.topics,
+  regions: filter.regions,
+  languages: filter.languages,
+  start_date: startDate,
+  end_date: endDate,
+  sort_by: filter.sortBy,
+});
+
 export const fetchNews = createAsyncThunk<
   { articles: Article[]; pagination: PaginationState },
   { filter?: FilterState; page?: number; limit?: number },
@@ -42,28 +64,25 @@ export const fetchNews = createAsyncThunk<
   const filter = params.filter ?? state.news.filter;
   const page = params.page ?? state.news.pagination.page;
   const limit = params.limit ?? state.news.pagination.limit;
-  const query = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-    sortBy: filter.sortBy,
-  });
-  filter.topics.forEach((topic) => query.append('topics', topic));
-  filter.regions.forEach((region) => query.append('regions', region));
-  filter.languages.forEach((language) => query.append('languages', language));
-
   try {
-    const response = await fetch(`${API_BASE_URL}/news?${query.toString()}`);
-    if (!response.ok) {
-      const message = await response.text();
-      throw new Error(message || 'Unable to fetch news');
-    }
-    const data = await response.json();
+    const response = await apiClient.get(API_ENDPOINTS.news.list, {
+      params: buildListParams(filter, page, limit),
+    });
+    const payload = (response.data as any)?.data ?? response.data;
+    const pagination = (response.data as any)?.pagination ?? payload?.pagination;
+    const articles = Array.isArray(payload) ? payload : payload.articles;
+    const limitFromApi = pagination?.limit ?? payload?.limit ?? limit;
+    const offsetFromApi = pagination?.offset ?? payload?.offset;
+    const pageFromApi =
+      typeof offsetFromApi === 'number' && typeof limitFromApi === 'number'
+        ? Math.floor(offsetFromApi / limitFromApi) + 1
+        : payload?.page ?? page;
     return {
-      articles: data.articles as Article[],
+      articles: (articles ?? []) as Article[],
       pagination: {
-        page: data.page ?? page,
-        total: data.total ?? data.articles?.length ?? 0,
-        limit,
+        page: pageFromApi,
+        total: pagination?.total ?? payload?.total ?? articles?.length ?? 0,
+        limit: limitFromApi,
       },
     };
   } catch (error) {
@@ -81,13 +100,9 @@ export const fetchArticleDetail = createAsyncThunk<Article, string, { state: Roo
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/news/${articleId}`);
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || 'Unable to fetch article');
-      }
-      const data: Article = await response.json();
-      return data;
+      const response = await apiClient.get(API_ENDPOINTS.news.detail(articleId));
+      const payload = (response.data as any)?.data ?? response.data;
+      return payload as Article;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unexpected error fetching article';
       return thunkApi.rejectWithValue(message);
@@ -105,17 +120,12 @@ export const generateSummary = createAsyncThunk<
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/news/${articleId}/summarize`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ length }),
+    const response = await apiClient.post(API_ENDPOINTS.news.detail(articleId) + '/summarize', {
+      length,
     });
-    if (!response.ok) {
-      const message = await response.text();
-      throw new Error(message || 'Unable to generate summary');
-    }
-    const data = await response.json();
-    return { id: articleId, summary: data.summary as string };
+    const payload = (response.data as any)?.data ?? response.data;
+    const summary = payload?.summary ?? payload?.summary_text ?? payload?.summaryText;
+    return { id: articleId, summary: summary as string };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected error generating summary';
     return thunkApi.rejectWithValue(message);
@@ -124,35 +134,30 @@ export const generateSummary = createAsyncThunk<
 
 export const searchNews = createAsyncThunk<
   { articles: Article[]; pagination: PaginationState },
-  { query: string; filter?: FilterState },
+  { query: string; filter?: FilterState; startDate?: string; endDate?: string },
   { state: RootState }
->('news/searchNews', async ({ query, filter }, thunkApi) => {
+>('news/searchNews', async ({ query, filter, startDate, endDate }, thunkApi) => {
   const { getState } = thunkApi;
   if (getState().ui.networkStatus === 'offline') {
     return enqueueWhenOffline(thunkApi, 'news/searchNews', { query, filter });
   }
 
   try {
-    const payload = {
+    const payload = buildSearchPayload(
       query,
-      filter: filter ?? getState().news.filter,
-    };
-    const response = await fetch(`${API_BASE_URL}/news/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      const message = await response.text();
-      throw new Error(message || 'Unable to search news');
-    }
-    const data = await response.json();
+      filter ?? getState().news.filter,
+      startDate,
+      endDate,
+    );
+    const response = await apiClient.post(API_ENDPOINTS.news.search, payload);
+    const payloadData = (response.data as any)?.data ?? response.data;
+    const articles = Array.isArray(payloadData) ? payloadData : payloadData.articles;
     return {
-      articles: data.articles as Article[],
+      articles: (articles ?? []) as Article[],
       pagination: {
-        page: data.page ?? 1,
-        total: data.total ?? data.articles?.length ?? 0,
-        limit: data.limit ?? getState().news.pagination.limit,
+        page: payloadData.page ?? 1,
+        total: payloadData.total ?? articles?.length ?? 0,
+        limit: payloadData.limit ?? getState().news.pagination.limit,
       },
     };
   } catch (error) {

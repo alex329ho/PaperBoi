@@ -40,24 +40,39 @@ const SearchScreen = () => {
   const [sort, setSort] = useState<'recent' | 'relevance'>('recent');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const showDateError = Boolean(dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo));
+
+  const buildSearchParams = () => ({
+    query,
+    page: 1,
+    filter: {
+      topics: selectedTopics,
+      regions: selectedRegions,
+      languages: selectedLanguages,
+      sortBy: sort,
+    },
+    startDate: showDateError || !dateFrom ? undefined : dateFrom,
+    endDate: showDateError || !dateTo ? undefined : dateTo,
+  });
 
   useEffect(() => {
     const handler = setTimeout(() => {
       if (query.trim().length > 2) {
-        executeSearch({
-          query,
-          page: 1,
-          filter: {
-            topics: selectedTopics,
-            regions: selectedRegions,
-            languages: selectedLanguages,
-            sortBy: sort,
-          },
-        });
+        executeSearch(buildSearchParams());
       }
     }, 400);
     return () => clearTimeout(handler);
-  }, [executeSearch, query, selectedLanguages, selectedRegions, selectedTopics, sort]);
+  }, [
+    executeSearch,
+    query,
+    selectedLanguages,
+    selectedRegions,
+    selectedTopics,
+    sort,
+    dateFrom,
+    dateTo,
+    showDateError,
+  ]);
 
   const toggleValue = (value: string, list: string[], setter: (next: string[]) => void) => {
     setter(list.includes(value) ? list.filter((item) => item !== value) : [...list, value]);
@@ -65,22 +80,12 @@ const SearchScreen = () => {
 
   const handleSubmit = () => {
     if (!query.trim()) return;
-    executeSearch({
-      query,
-      page: 1,
-      filter: {
-        topics: selectedTopics,
-        regions: selectedRegions,
-        languages: selectedLanguages,
-        sortBy: sort,
-      },
-    });
+    executeSearch(buildSearchParams());
     saveRecent([query, ...recentSearches.filter((item) => item !== query)].slice(0, 10));
   };
 
   const hasNoResults = !search.loading && !search.results.length && query.length > 2;
   const savedIds = useMemo(() => saved.map((item) => item.id), [saved]);
-  const showDateError = Boolean(dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo));
 
   const renderHeader = () => (
     <View style={{ padding: 16 }}>

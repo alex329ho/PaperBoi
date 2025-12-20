@@ -1,10 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 export interface StorageOptions {
   secure?: boolean;
   encrypt?: boolean;
 }
+
+const secureStoreAvailable = async () => {
+  if (Platform.OS === 'web') return false;
+  if (typeof SecureStore.isAvailableAsync === 'function') {
+    try {
+      return await SecureStore.isAvailableAsync();
+    } catch {
+      return false;
+    }
+  }
+  return true;
+};
 
 const encode = (value: unknown, options?: StorageOptions) => {
   const serialized = JSON.stringify(value);
@@ -55,7 +68,7 @@ const getByteSize = (value: string) => {
 
 export const setItem = async <T>(key: string, value: T, options?: StorageOptions) => {
   const payload = encode(value, options);
-  if (options?.secure) {
+  if (options?.secure && (await secureStoreAvailable())) {
     await SecureStore.setItemAsync(key, payload);
     return;
   }
@@ -63,7 +76,7 @@ export const setItem = async <T>(key: string, value: T, options?: StorageOptions
 };
 
 export const getItem = async <T>(key: string, options?: StorageOptions): Promise<T | null> => {
-  if (options?.secure) {
+  if (options?.secure && (await secureStoreAvailable())) {
     const raw = await SecureStore.getItemAsync(key);
     return decode<T>(raw, options);
   }
@@ -72,7 +85,7 @@ export const getItem = async <T>(key: string, options?: StorageOptions): Promise
 };
 
 export const removeItem = async (key: string, options?: StorageOptions) => {
-  if (options?.secure) {
+  if (options?.secure && (await secureStoreAvailable())) {
     await SecureStore.deleteItemAsync(key);
     return;
   }

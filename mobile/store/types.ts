@@ -99,6 +99,8 @@ export type SearchParams = {
   query: string;
   page?: number;
   filter?: FilterState;
+  startDate?: string;
+  endDate?: string;
 };
 
 export type PreferencesState = {

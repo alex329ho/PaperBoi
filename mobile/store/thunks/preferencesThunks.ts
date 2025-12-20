@@ -1,9 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '../../services/api';
+import { API_ENDPOINTS } from '../../services/endpoints';
 import { addPendingAction } from '../slices/syncSlice';
 import { PreferencesState, RootState } from '../types';
-
-const API_BASE_URL = 'https://api.paperboi.app';
 
 const enqueueWhenOffline = async (
   thunkApi: Parameters<Parameters<typeof createAsyncThunk>[1]>[1],
@@ -31,12 +31,8 @@ export const fetchPreferences = createAsyncThunk<PreferencesState, void, { state
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/preferences`);
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || 'Unable to fetch preferences');
-      }
-      const data: PreferencesState = await response.json();
+      const response = await apiClient.get(API_ENDPOINTS.preferences.base);
+      const data = ((response.data as any)?.data ?? response.data) as PreferencesState;
       await AsyncStorage.setItem('paperboi_preferences', JSON.stringify(data));
       return data;
     } catch (error) {
@@ -61,19 +57,11 @@ export const updatePreferences = createAsyncThunk<
     return enqueueWhenOffline(thunkApi, 'preferences/updatePreferences', updates);
   }
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/preferences`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    });
-    if (!response.ok) {
-      const message = await response.text();
-      throw new Error(message || 'Unable to update preferences');
-    }
-    const data: PreferencesState = await response.json();
-    await AsyncStorage.setItem('paperboi_preferences', JSON.stringify(data));
-    return data;
+    try {
+      const response = await apiClient.put(API_ENDPOINTS.preferences.update, updates);
+      const data = ((response.data as any)?.data ?? response.data) as PreferencesState;
+      await AsyncStorage.setItem('paperboi_preferences', JSON.stringify(data));
+      return data;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Unexpected error updating preferences';

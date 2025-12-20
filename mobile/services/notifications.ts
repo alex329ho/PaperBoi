@@ -21,10 +21,27 @@ Notifications.setNotificationHandler({
 const DEFAULT_CHANNEL_ID = 'paperboi-default';
 const BACKEND_TOKEN_ENDPOINT = '/preferences/device-token';
 
-const getFirebaseConfig = () =>
-  Constants.expoConfig?.extra?.firebase ||
-  (Constants as unknown as { manifest?: { extra?: Record<string, unknown> } }).manifest?.extra
-    ?.firebase;
+const getFirebaseConfig = () => {
+  const extra =
+    Constants.expoConfig?.extra ||
+    (Constants as unknown as { manifest?: { extra?: Record<string, any> } }).manifest?.extra ||
+    {};
+  if (Platform.OS === 'ios' && extra.firebaseIos) {
+    return extra.firebaseIos;
+  }
+  if (extra.firebase) {
+    return extra.firebase;
+  }
+  return {
+    apiKey: extra.firebaseApiKey,
+    authDomain: extra.firebaseAuthDomain,
+    projectId: extra.firebaseProjectId,
+    storageBucket: extra.firebaseStorageBucket,
+    messagingSenderId: extra.firebaseSenderId,
+    appId: extra.firebaseAppId,
+    measurementId: extra.firebaseMeasurementId,
+  };
+};
 
 class NotificationService {
   private app?: FirebaseApp;

@@ -15,16 +15,14 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.paperboi.mobile",
-      "scheme": "paperboi"
+      "bundleIdentifier": "app.paperboi.mobile"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "app.paperboi.mobile",
-      "scheme": "paperboi"
+      "package": "app.paperboi.mobile"
     },
     "plugins": [
       ["expo-build-properties", { "android": { "usesCleartextTraffic": false } }],
@@ -40,7 +38,24 @@
       "firebaseApiKey": "${EXPO_PUBLIC_FIREBASE_API_KEY}",
       "firebaseProjectId": "${EXPO_PUBLIC_FIREBASE_PROJECT_ID}",
       "appVersion": "${EXPO_PUBLIC_APP_VERSION}",
-      "apiTimeout": "${EXPO_PUBLIC_API_TIMEOUT}"
+      "apiTimeout": "${EXPO_PUBLIC_API_TIMEOUT}",
+      "firebase": {
+        "apiKey": "${EXPO_PUBLIC_FIREBASE_API_KEY}",
+        "authDomain": "${EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN}",
+        "projectId": "${EXPO_PUBLIC_FIREBASE_PROJECT_ID}",
+        "storageBucket": "${EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET}",
+        "messagingSenderId": "${EXPO_PUBLIC_FIREBASE_SENDER_ID}",
+        "appId": "${EXPO_PUBLIC_FIREBASE_APP_ID}",
+        "measurementId": "${EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID}"
+      },
+      "firebaseIos": {
+        "apiKey": "${EXPO_PUBLIC_IOS_FIREBASE_API_KEY}",
+        "projectId": "${EXPO_PUBLIC_IOS_FIREBASE_PROJECT_ID}",
+        "storageBucket": "${EXPO_PUBLIC_IOS_FIREBASE_STORAGE_BUCKET}",
+        "messagingSenderId": "${EXPO_PUBLIC_IOS_FIREBASE_MESSAGING_SENDER_ID}",
+        "appId": "${EXPO_PUBLIC_IOS_FIREBASE_APP_ID}",
+        "bundleId": "${EXPO_PUBLIC_IOS_FIREBASE_BUNDLE_ID}"
+      }
     }
   }
 }

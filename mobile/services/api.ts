@@ -14,8 +14,22 @@ const APP_VERSION =
   Constants.expoConfig?.extra?.appVersion ||
   'dev';
 
+const DEFAULT_WEB_BASE_URL = 'http://localhost:8000';
+const normalizeBaseUrl = (url?: string) => {
+  if (!url) return url;
+  return url.replace(/\/api\/v1\/?$/, '');
+};
+const resolvedBaseUrl = (() => {
+  const envBaseUrl =
+    Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (Platform.OS === 'web') {
+    return normalizeBaseUrl(envBaseUrl || DEFAULT_WEB_BASE_URL);
+  }
+  return normalizeBaseUrl(envBaseUrl);
+})();
+
 export const apiClient = axios.create({
-  baseURL: Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL,
+  baseURL: resolvedBaseUrl,
   timeout: Number(process.env.EXPO_PUBLIC_API_TIMEOUT) || 30000,
   headers: {
     'Content-Type': 'application/json',

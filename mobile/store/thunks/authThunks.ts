@@ -1,9 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '../../services/api';
+import { API_ENDPOINTS } from '../../services/endpoints';
 import { addPendingAction } from '../slices/syncSlice';
 import { RootState, UserProfile } from '../types';
-
-const API_BASE_URL = 'https://api.paperboi.app';
 
 type AuthResponse = {
   user: UserProfile;
@@ -45,16 +45,8 @@ export const loginUser = createAsyncThunk<AuthResponse, Credentials, { state: Ro
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-      });
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || 'Authentication failed');
-      }
-      const data: AuthResponse = await response.json();
+      const response = await apiClient.post(API_ENDPOINTS.auth.login, credentials);
+      const data = ((response.data as any)?.data ?? response.data) as AuthResponse;
       await AsyncStorage.setItem('paperboi_token', data.token);
       await AsyncStorage.setItem('paperboi_user', JSON.stringify(data.user));
       return data;
@@ -74,16 +66,8 @@ export const registerUser = createAsyncThunk<AuthResponse, RegisterPayload, { st
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || 'Registration failed');
-      }
-      const data: AuthResponse = await response.json();
+      const response = await apiClient.post(API_ENDPOINTS.auth.register, payload);
+      const data = ((response.data as any)?.data ?? response.data) as AuthResponse;
       await AsyncStorage.setItem('paperboi_token', data.token);
       await AsyncStorage.setItem('paperboi_user', JSON.stringify(data.user));
       return data;
@@ -105,15 +89,12 @@ export const refreshToken = createAsyncThunk<AuthResponse, void, { state: RootSt
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${currentToken}` },
-      });
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || 'Token refresh failed');
-      }
-      const data: AuthResponse = await response.json();
+      const response = await apiClient.post(
+        API_ENDPOINTS.auth.refresh,
+        {},
+        { headers: { Authorization: `Bearer ${currentToken}` } },
+      );
+      const data = ((response.data as any)?.data ?? response.data) as AuthResponse;
       await AsyncStorage.setItem('paperboi_token', data.token);
       if (data.user) {
         await AsyncStorage.setItem('paperboi_user', JSON.stringify(data.user));
@@ -139,17 +120,12 @@ export const logoutUser = createAsyncThunk<{ success: boolean }, void, { state: 
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
-        method: 'POST',
+      await apiClient.post(API_ENDPOINTS.auth.logout, undefined, {
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || 'Logout failed');
-      }
       await AsyncStorage.removeItem('paperboi_token');
       await AsyncStorage.removeItem('paperboi_user');
       return { success: true };
