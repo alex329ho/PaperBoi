@@ -10,6 +10,7 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.schema import CreateTable
 
 import sys
 
@@ -28,14 +29,15 @@ async def redis_client():
     try:
         yield client
     finally:
-        await client.aclose()
+        await client.close()
 
 
 @pytest_asyncio.fixture()
 async def db_session() -> AsyncSession:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
+        for table in Base.metadata.sorted_tables:
+            await connection.execute(CreateTable(table))
 
     Session = async_sessionmaker(engine, expire_on_commit=False)
     async with Session() as session:

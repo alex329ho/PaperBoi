@@ -5,6 +5,7 @@ import fakeredis.aioredis
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.schema import CreateTable
 from sqlalchemy.pool import StaticPool
 
 from pathlib import Path
@@ -35,7 +36,8 @@ def client() -> TestClient:
 
     async def init_db() -> None:
         async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+            for table in Base.metadata.sorted_tables:
+                await conn.execute(CreateTable(table))
         async with session_factory() as session:
             article = NewsArticle(
                 title="Sample technology article",
@@ -51,7 +53,7 @@ def client() -> TestClient:
             session.add(article)
             await session.commit()
 
-    asyncio.get_event_loop().run_until_complete(init_db())
+    asyncio.run(init_db())
 
     async def _get_db_session():
         async with session_factory() as session:
@@ -67,7 +69,7 @@ def client() -> TestClient:
         yield test_client
 
     app.dependency_overrides = {}
-    asyncio.get_event_loop().run_until_complete(engine.dispose())
+    asyncio.run(engine.dispose())
 
 
 def test_list_news(client: TestClient) -> None:

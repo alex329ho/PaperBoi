@@ -56,14 +56,18 @@ const syncMiddleware: Middleware = (storeApi) => {
       if (storeApi.getState().ui.networkStatus === 'offline') {
         break;
       }
-      const actionCreator = offlineActionCreators[pending.actionType];
+      const actionCreator = pending.originalAction ?? offlineActionCreators[pending.actionType];
       if (!actionCreator) {
         storeApi.dispatch(removePendingAction(pending.id));
         continue;
       }
 
       try {
-        const result = await storeApi.dispatch(actionCreator(pending.args));
+        const actionToDispatch =
+          typeof actionCreator === 'function' && actionCreator.typePrefix
+            ? actionCreator(pending.args)
+            : actionCreator;
+        const result = await storeApi.dispatch(actionToDispatch as any);
         const status = (result as any)?.meta?.requestStatus;
         const errorMessage = (result as any)?.error?.message as string | undefined;
         if (status === 'fulfilled') {
@@ -107,10 +111,12 @@ const syncMiddleware: Middleware = (storeApi) => {
     const state = storeApi.getState();
     if (typeof action === 'function' && state.ui.networkStatus === 'offline') {
       const typePrefix = (action as any).typePrefix || action.name || 'anonymousThunk';
+      const uniqueId = `${typePrefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       const pendingAction: SyncPendingAction = {
-        id: `${typePrefix}-${Date.now()}`,
+        id: uniqueId,
         actionType: typePrefix,
-        args: (action as any).arg,
+        args: (action as any).arg ?? (action as any).payload,
+        originalAction: action,
         attempt: 0,
         createdAt: Date.now(),
         critical: false,

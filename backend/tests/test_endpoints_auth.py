@@ -3,6 +3,7 @@ import asyncio
 import fakeredis.aioredis
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.schema import CreateTable
 from sqlalchemy.pool import StaticPool
 from pathlib import Path
 import sys
@@ -30,9 +31,10 @@ def setup_app() -> TestClient:
 
     async def init_db() -> None:
         async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+            for table in Base.metadata.sorted_tables:
+                await conn.execute(CreateTable(table))
 
-    asyncio.get_event_loop().run_until_complete(init_db())
+    asyncio.run(init_db())
 
     async def _get_db_session():
         async with session_factory() as session:
@@ -51,7 +53,7 @@ def setup_app() -> TestClient:
 
 def teardown_app(client: TestClient) -> None:
     app.dependency_overrides = {}
-    asyncio.get_event_loop().run_until_complete(client.engine.dispose())  # type: ignore[attr-defined]
+    asyncio.run(client.engine.dispose())  # type: ignore[attr-defined]
 
 
 def test_register_and_login() -> None:
