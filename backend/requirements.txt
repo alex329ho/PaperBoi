@@ -6,6 +6,7 @@ SQLAlchemy==2.0.36
 # greenlet 3.1.x adds Python 3.13 wheels; 3.0.x fails to build on newer runtimes.
 greenlet==3.1.1
 psycopg[binary]==3.3.2
+asyncpg==0.29.0
 alembic==1.13.3
 redis==5.1.1
 APScheduler==3.10.4
@@ -14,6 +15,7 @@ beautifulsoup4==4.12.3
 fakeredis==2.23.2
 httpx==0.27.2
 loguru==0.7.2
+mangum==0.17.0
 orjson==3.10.7
 passlib[bcrypt]==1.7.4
 PyJWT==2.9.0

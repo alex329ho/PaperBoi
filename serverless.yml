@@ -1,0 +1,48 @@
+service: paperboi-backend
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  memorySize: 1024
+  timeout: 30
+  environment:
+    PAPERBOI_ENVIRONMENT: ${self:provider.stage}
+    PAPERBOI_DEBUG: "false"
+    PAPERBOI_DATABASE_URL: ${ssm:/paperboi/${self:provider.stage}/database_url}
+    PAPERBOI_DATABASE_SSL_MODE: ${ssm:/paperboi/${self:provider.stage}/database_ssl_mode, 'require'}
+    PAPERBOI_REDIS_URL: ${ssm:/paperboi/${self:provider.stage}/redis_url, ''}
+    PAPERBOI_JWT_SECRET_KEY: ${ssm:/paperboi/${self:provider.stage}/jwt_secret_key}
+    PAPERBOI_GDELT_API_KEY: ${ssm:/paperboi/${self:provider.stage}/gdelt_api_key}
+    PAPERBOI_CORS_ORIGINS: ${ssm:/paperboi/${self:provider.stage}/cors_origins, ''}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+            - ssm:GetParameters
+            - ssm:GetParametersByPath
+          Resource: "arn:aws:ssm:${aws:region}:${aws:accountId}:parameter/paperboi/*"
+
+functions:
+  api:
+    handler: backend.lambda_handler.handler
+    events:
+      - httpApi: "*"
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+    slim: true
+    strip: false
+
+package:
+  patterns:
+    - "!**/__pycache__/**"
+    - "!**/*.pyc"

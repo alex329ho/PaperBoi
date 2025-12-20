@@ -1,0 +1,59 @@
+# Prometheus-style alert rules for PaperBoi
+# Update label selectors to match your metrics job names.
+groups:
+  - name: paperboi-api
+    rules:
+      - alert: PaperBoiApiHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="paperboi-api",status=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total{job="paperboi-api"}[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PaperBoi API error rate above 5%"
+          description: "Investigate recent deploys, DB connectivity, and upstream dependencies."
+
+      - alert: PaperBoiApiHighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="paperboi-api"}[5m])) by (le)) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PaperBoi API p95 latency above 1s"
+          description: "Check DB performance, cache hit rate, and external API calls."
+
+      - alert: PaperBoiApiRestarts
+        expr: increase(process_start_time_seconds{job="paperboi-api"}[10m]) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PaperBoi API restarts detected"
+          description: "Inspect container logs for crashes or OOMs."
+
+  - name: paperboi-database
+    rules:
+      - alert: PaperBoiDbConnectionsHigh
+        expr: |
+          sum(pg_stat_activity_count{job="paperboi-db"})
+          /
+          max(pg_settings_max_connections{job="paperboi-db"}) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Postgres connections above 80%"
+          description: "Scale DB or adjust pool sizing."
+
+      - alert: PaperBoiDbStorageLow
+        expr: |
+          (pg_database_size_bytes{job="paperboi-db"} / 1024 / 1024 / 1024) > 80
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Postgres storage above 80 GB"
+          description: "Plan storage expansion or cleanup."

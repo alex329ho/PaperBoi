@@ -1,21 +1,19 @@
-version: "3.9"
-
 services:
   api:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: paperboi_api
     env_file:
-      - backend/.env.example
+      - backend/.env.docker
     ports:
       - "8000:8000"
     depends_on:
       - db
       - cache
     volumes:
-      - ./backend:/app
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+      - ./backend:/app/backend
+    command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   db:
     image: postgres:16-alpine
