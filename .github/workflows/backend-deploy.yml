@@ -1,0 +1,44 @@
+name: Backend Deploy
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t paperboi-backend:${{ github.ref_name }} -f backend/Dockerfile backend
+
+      - name: Deploy to Heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          usedocker: true
+          dockerfile_path: backend/Dockerfile
+
+      - name: Smoke test
+        env:
+          SMOKE_TEST_URL: ${{ secrets.SMOKE_TEST_URL }}
+        run: |
+          if [[ -z "$SMOKE_TEST_URL" ]]; then
+            echo "SMOKE_TEST_URL is not set."
+            exit 1
+          fi
+          for attempt in 1 2 3 4 5; do
+            if curl -fsS "$SMOKE_TEST_URL"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
