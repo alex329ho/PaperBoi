@@ -5,7 +5,7 @@ import asyncio
 import importlib
 from typing import Any, Callable, Dict
 
-from apscheduler.executors.pool import ThreadPoolExecutor
+from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.base import STATE_STOPPED
@@ -45,7 +45,7 @@ class SchedulerManager:
             "default": SQLAlchemyJobStore(url=sync_database_url(settings.database_url)),
         }
         executors = {
-            "default": ThreadPoolExecutor(max_workers=5),
+            "default": AsyncIOExecutor(),
         }
         self.scheduler = AsyncIOScheduler(
             jobstores=jobstores,

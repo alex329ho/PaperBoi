@@ -39,12 +39,14 @@ from backend.utils.url_utils import hash_url, is_valid_url
 class GDELTService:
     """Fetch and persist news articles from the GDELT Project API."""
 
-    BASE_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
+    DEFAULT_BASE_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
     CACHE_TTL_SECONDS = 3600
     MAX_RETRIES = 5
     REQUEST_TIMEOUT = 30
     MAX_RECORDS = 250
     RATE_LIMIT_PER_DAY = 250
+    DEFAULT_RETRY_AFTER_SECONDS = 15
+    COOLDOWN_KEY = "gdelt:cooldown"
     CACHE_KEY_PREFIX = "gdelt:cache"
     URL_HASH_SET = "gdelt:url_hashes"
     RATE_LIMIT_KEY = "gdelt:daily_requests"
@@ -64,6 +66,7 @@ class GDELTService:
         self.cache_ttl_seconds = cache_ttl_seconds
         self.max_retries = max_retries
         self.logger = get_logger(__name__)
+        self.base_url = settings.gdelt_api_url or self.DEFAULT_BASE_URL
 
         adapter = HTTPAdapter(pool_connections=20, pool_maxsize=50)
         self.http = requests.Session()
@@ -94,8 +97,11 @@ class GDELTService:
             raise GDELTInvalidParameterError("Query string cannot be empty")
 
         if timespan:
-            if not timespan.endswith(("hours", "hour", "day", "days")):
-                raise GDELTInvalidParameterError("Timespan must end with 'hour(s)' or 'day(s)'")
+            normalized = timespan.strip().lower()
+            if not self._is_valid_timespan(normalized):
+                raise GDELTInvalidParameterError(
+                    "Timespan must be a number plus unit (h, d, w, m, y) or full words like 'hours', 'days', 'weeks', 'months', 'years'"
+                )
 
         if region and len(region) != 2:
             raise GDELTInvalidParameterError("Region must be a two-letter country code")
@@ -138,18 +144,19 @@ class GDELTService:
         return articles
 
     async def _execute_request(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        await self._check_cooldown()
         await self._enforce_rate_limit()
 
         async def _request() -> Response:
             return await asyncio.to_thread(
                 self.http.get,
-                self.BASE_URL,
+                self.base_url,
                 params=params,
                 timeout=self.request_timeout,
             )
 
         try:
-            response: Response = await execute_with_retry(
+            response = await execute_with_retry(
                 _request,
                 (requests.Timeout, requests.ConnectionError),
                 retries=self.max_retries,
@@ -162,7 +169,13 @@ class GDELTService:
             raise GDELTNetworkError("Network failure during GDELT request", details=str(exc)) from exc
 
         if response.status_code == 429:
-            raise GDELTRateLimitError("GDELT API rate limit reached")
+            retry_after = self._retry_after_seconds(response)
+            await self._set_cooldown(retry_after)
+            self.logger.warning(
+                "GDELT rate limited; entering cooldown",
+                extra={"retry_after": retry_after, "params": params},
+            )
+            raise GDELTRateLimitError("GDELT API rate limit reached", details=response.text)
 
         if not response.ok:
             raise GDELTResponseError(
@@ -330,8 +343,9 @@ class GDELTService:
     ) -> Dict[str, Any]:
         base_params: Dict[str, Any] = {
             "query": query,
+            "mode": "artlist",
             "format": "json",
-            "sort": "hybridrelev",
+            "sort": "datedesc",
             "maxrecords": self.MAX_RECORDS,
         }
 
@@ -346,3 +360,34 @@ class GDELTService:
             base_params["sourcelang"] = language
 
         return base_params
+
+    def _is_valid_timespan(self, value: str) -> bool:
+        if not value:
+            return False
+        units = ("h", "d", "w", "m", "y", "hour", "hours", "day", "days", "week", "weeks", "month", "months", "year", "years")
+        for unit in units:
+            if value.endswith(unit):
+                digits = value[: -len(unit)].strip()
+                return digits.isdigit()
+        return False
+
+    def _retry_after_seconds(self, response: Response) -> int:
+        raw = response.headers.get("Retry-After")
+        if raw:
+            try:
+                retry_after = int(raw)
+                return max(1, min(retry_after, 300))
+            except ValueError:
+                return self.DEFAULT_RETRY_AFTER_SECONDS
+        return self.DEFAULT_RETRY_AFTER_SECONDS
+
+    async def _check_cooldown(self) -> None:
+        ttl = await self.redis.ttl(self.COOLDOWN_KEY)
+        if ttl and ttl > 0:
+            raise GDELTRateLimitError(
+                "GDELT cooldown active", details={"retry_after_seconds": ttl}
+            )
+
+    async def _set_cooldown(self, seconds: int) -> None:
+        bounded = max(1, min(seconds, 300))
+        await self.redis.set(self.COOLDOWN_KEY, "1", ex=bounded)

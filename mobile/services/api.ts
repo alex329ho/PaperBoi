@@ -15,18 +15,44 @@ const APP_VERSION =
   'dev';
 
 const DEFAULT_WEB_BASE_URL = 'http://localhost:8000';
+const DEFAULT_NATIVE_BASE_URL =
+  __DEV__ && Platform.OS !== 'web'
+    ? Platform.OS === 'android'
+      ? 'http://10.0.2.2:8000'
+      : 'http://localhost:8000'
+    : undefined;
 const normalizeBaseUrl = (url?: string) => {
   if (!url) return url;
   return url.replace(/\/api\/v1\/?$/, '');
 };
+const isTemplateValue = (value?: string) =>
+  Boolean(value) && value?.includes('${');
 const resolvedBaseUrl = (() => {
-  const envBaseUrl =
-    Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL;
+  const extraBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl;
+  const envBaseUrl = !isTemplateValue(extraBaseUrl)
+    ? extraBaseUrl
+    : process.env.EXPO_PUBLIC_API_BASE_URL;
   if (Platform.OS === 'web') {
     return normalizeBaseUrl(envBaseUrl || DEFAULT_WEB_BASE_URL);
   }
-  return normalizeBaseUrl(envBaseUrl);
+  return normalizeBaseUrl(envBaseUrl || DEFAULT_NATIVE_BASE_URL);
 })();
+
+if (__DEV__) {
+  const baseUrlSource = !isTemplateValue(Constants.expoConfig?.extra?.apiBaseUrl)
+    ? 'expo.extra.apiBaseUrl'
+    : process.env.EXPO_PUBLIC_API_BASE_URL
+      ? 'EXPO_PUBLIC_API_BASE_URL'
+      : Platform.OS === 'web'
+        ? 'DEFAULT_WEB_BASE_URL'
+        : DEFAULT_NATIVE_BASE_URL
+          ? 'DEFAULT_NATIVE_BASE_URL'
+          : 'unset';
+  console.log(`[API] Base URL: ${resolvedBaseUrl ?? 'undefined'} (source: ${baseUrlSource})`);
+  if (!resolvedBaseUrl) {
+    console.warn('[API] No base URL configured; requests will fail.');
+  }
+}
 
 export const apiClient = axios.create({
   baseURL: resolvedBaseUrl,

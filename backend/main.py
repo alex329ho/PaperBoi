@@ -15,6 +15,7 @@ from backend.middleware.logging import RequestContextLogMiddleware
 from backend.models import news, user  # noqa: F401 - imported for metadata registration
 from backend.models.database import Base, dispose_engine, get_session, validate_connection
 from backend.routes import auth_router, email_router, health_router, news_router, preferences_router
+from backend.tasks.scheduler import SchedulerManager
 from backend.utils.logger import configure_logging, get_logger
 
 configure_logging(settings)
@@ -27,9 +28,12 @@ async def lifespan(_: FastAPI):
     logger.info("Starting application", extra={"environment": settings.environment})
     settings.require_secure_configuration()
     await validate_connection()
+    scheduler_manager = SchedulerManager()
+    scheduler_manager.start()
     try:
         yield
     finally:
+        scheduler_manager.shutdown()
         try:
             await dispose_engine()
         except Exception:  # noqa: BLE001

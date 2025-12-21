@@ -112,6 +112,7 @@ def test_fetch_fresh_maps_gdelt_article(client: TestClient) -> None:
     async def _get_gdelt_service():
         service = GDELTService(db_session=None, redis_client=fakeredis.aioredis.FakeRedis())
         service._execute_request = AsyncMock(return_value=gdelt_payload)
+        service.save_articles_to_db = AsyncMock(return_value=[])
         return service
 
     app.dependency_overrides[get_gdelt_service] = _get_gdelt_service

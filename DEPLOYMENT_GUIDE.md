@@ -20,7 +20,8 @@ Key variables:
 - `PAPERBOI_DATABASE_URL` (async driver required, e.g. `postgresql+asyncpg://...`)
 - `PAPERBOI_REDIS_URL`
 - `PAPERBOI_JWT_SECRET_KEY`
-- `PAPERBOI_GDELT_API_KEY`
+- `PAPERBOI_GDELT_API_URL` (optional; override GDELT DOC endpoint for mocks)
+- `PAPERBOI_GDELT_API_KEY` (optional; GDELT DOC API does not require a key)
 - `PAPERBOI_CORS_ORIGINS` (comma-separated)
 
 Local Docker uses `backend/.env.docker`. For production, set the same variables in your cloud provider.
@@ -81,7 +82,7 @@ heroku config:set \
   PAPERBOI_DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:PORT/DB \
   PAPERBOI_REDIS_URL=redis://USER:PASSWORD@HOST:PORT/0 \
   PAPERBOI_JWT_SECRET_KEY=replace-me \
-  PAPERBOI_GDELT_API_KEY=replace-me
+  # PAPERBOI_GDELT_API_KEY=replace-me (optional; GDELT DOC API does not require a key)
 ```
 
 3. Add a database (optional if using Heroku Postgres):

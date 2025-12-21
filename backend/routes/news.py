@@ -14,6 +14,7 @@ from backend.middleware.rate_limit import RateLimiter
 from backend.models.news import NewsArticle, Summary
 from backend.schemas.news import NewsArticleRead, SummaryRead
 from backend.services.gdelt_service import GDELTService
+from backend.services.exceptions import GDELTRateLimitError
 from backend.services.summarization import SummarizationService
 from backend.utils.logger import get_logger
 
@@ -175,6 +176,13 @@ async def fetch_fresh(
         articles = await service.fetch_news(
             body.query, timespan=body.timespan, region=body.region, language=body.language
         )
+        await service.save_articles_to_db(articles)
+    except GDELTRateLimitError as exc:
+        logger.warning("Fresh fetch rate limited", extra={"error": str(exc)})
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="GDELT rate limit reached. Try again later.",
+        ) from exc
     except Exception as exc:  # noqa: BLE001
         logger.exception("Fresh fetch failed", extra={"error": str(exc)})
         raise HTTPException(

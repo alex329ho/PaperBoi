@@ -41,6 +41,7 @@ class AppSettings(BaseSettings):
 
     redis_url: str = "redis://localhost:6379/0"
 
+    gdelt_api_url: str = "https://api.gdeltproject.org/api/v2/doc/doc"
     gdelt_api_key: str = ""
     openrouter_api_key: str = ""
     firebase_api_key: str = ""
@@ -119,8 +120,6 @@ class AppSettings(BaseSettings):
         if self.environment == "production":
             if not self.jwt_secret_key or self.jwt_secret_key == "change_this_secret":
                 raise ValueError("JWT secret key must be configured for production")
-            if not self.gdelt_api_key:
-                raise ValueError("GDELT API key must be configured for production")
 
     @property
     def allow_origins(self) -> List[str]:

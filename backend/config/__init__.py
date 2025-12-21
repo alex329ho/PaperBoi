@@ -28,6 +28,7 @@ if _spec and _spec.loader:
             database_pool_size = 20
             database_max_overflow = 0
             redis_url = "redis://localhost:6379/0"
+            gdelt_api_url = "https://api.gdeltproject.org/api/v2/doc/doc"
             gdelt_api_key = ""
             openrouter_api_key = ""
             firebase_api_key = ""
