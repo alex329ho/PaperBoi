@@ -8,7 +8,7 @@ import { PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Asset } from 'expo-asset';
 import { FontDisplay, useFonts } from 'expo-font';
-import { Platform } from 'react-native';
+import { Animated, Platform } from 'react-native';
 import { store, persistor } from '../store/store';
 import AppErrorBoundary from '../components/common/ErrorBoundary';
 import OfflineBanner from '../components/common/OfflineBanner';
@@ -17,6 +17,41 @@ import { useAppSelector } from '../hooks/useRedux';
 import { useTheme } from '../hooks/useTheme';
 
 SplashScreen.preventAutoHideAsync();
+
+// React Native Web lacks the native animated module; force JS driver in dev.
+const ensureWebAnimatedDriverDisabled = () => {
+  if (Platform.OS !== 'web') return;
+  if (globalThis.__paperboiWebAnimatedPatched) return;
+  globalThis.__paperboiWebAnimatedPatched = true;
+  const disableWebDriver = (original) => (value, config) =>
+    original(value, { ...(config || {}), useNativeDriver: false });
+  Animated.timing = disableWebDriver(Animated.timing);
+  Animated.spring = disableWebDriver(Animated.spring);
+  Animated.decay = disableWebDriver(Animated.decay);
+};
+
+ensureWebAnimatedDriverDisabled();
+
+const suppressWebWarnings = () => {
+  if (Platform.OS !== 'web') return;
+  if (globalThis.__paperboiWebWarnPatched) return;
+  globalThis.__paperboiWebWarnPatched = true;
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    const message = args[0];
+    if (typeof message === 'string') {
+      if (
+        message.includes('props.pointerEvents is deprecated') ||
+        message.includes('"shadow*" style props are deprecated')
+      ) {
+        return;
+      }
+    }
+    originalWarn(...args);
+  };
+};
+
+suppressWebWarnings();
 
 const RootProvider = ({ children }) => {
   const { theme } = useTheme();
