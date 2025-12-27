@@ -49,6 +49,7 @@ declare module 'react' {
 
 interface ProcessEnv {
   EXPO_PUBLIC_API_BASE_URL?: string;
+  EXPO_PUBLIC_WEB_API_BASE_URL?: string;
   EXPO_PUBLIC_API_TIMEOUT?: string;
   NODE_ENV?: string;
 }

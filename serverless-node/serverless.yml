@@ -1,0 +1,29 @@
+service: paperboi-serverless-api
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: dev
+  environment:
+    CORS_ALLOW_ORIGIN: "*"
+    CORS_ALLOW_HEADERS: "Content-Type,Authorization,X-Requested-With"
+    CORS_ALLOW_METHODS: "GET,POST,OPTIONS"
+
+functions:
+  api:
+    handler: index.handler
+    events:
+      - http:
+          path: articles
+          method: get
+          cors: true
+      - http:
+          path: articles
+          method: post
+          cors: true
+
+package:
+  patterns:
+    - "!node_modules/**"

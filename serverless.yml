@@ -17,6 +17,7 @@ provider:
     PAPERBOI_JWT_SECRET_KEY: ${ssm:/paperboi/${self:provider.stage}/jwt_secret_key}
     PAPERBOI_GDELT_API_KEY: ${ssm:/paperboi/${self:provider.stage}/gdelt_api_key}
     PAPERBOI_CORS_ORIGINS: ${ssm:/paperboi/${self:provider.stage}/cors_origins, ''}
+    PAPERBOI_CORS_ORIGIN_REGEX: ${ssm:/paperboi/${self:provider.stage}/cors_origin_regex, ''}
   iam:
     role:
       statements:

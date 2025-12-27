@@ -64,6 +64,7 @@ class AppSettings(BaseSettings):
     logging_format: str = "[%(asctime)s] %(levelname)s [%(request_id)s] %(name)s: %(message)s"
 
     cors_origins: List[str] = Field(default_factory=list)
+    cors_origin_regex: str | None = None
 
     jwt_secret_key: str = "change_this_secret"
     jwt_algorithm: str = "HS256"
@@ -86,6 +87,15 @@ class AppSettings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @field_validator("cors_origin_regex", mode="before")
+    @classmethod
+    def normalize_cors_origin_regex(cls, value: str | None) -> str | None:
+        """Treat empty regex strings as unset."""
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
 
     @field_validator("logging_level", mode="before")
     @classmethod

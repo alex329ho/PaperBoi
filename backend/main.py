@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.config import settings
+from backend.db import init_db
 from backend.middleware.auth import JWTAuthMiddleware
 from backend.middleware.rate_limit import RateLimitMiddleware, RateLimiter
 from backend.middleware.error_handler import register_exception_handlers
@@ -28,6 +29,8 @@ async def lifespan(_: FastAPI):
     logger.info("Starting application", extra={"environment": settings.environment})
     settings.require_secure_configuration()
     await validate_connection()
+    if settings.database_url.startswith("sqlite+aiosqlite"):
+        await init_db()
     scheduler_manager = SchedulerManager()
     scheduler_manager.start()
     try:
@@ -55,6 +58,7 @@ app.add_middleware(RateLimitMiddleware, limiter=RateLimiter())
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allow_origins,
+    allow_origin_regex=settings.cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

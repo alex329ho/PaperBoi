@@ -46,6 +46,7 @@ if _spec and _spec.loader:
             logging_level = "INFO"
             logging_format = "[%(asctime)s] %(levelname)s %(name)s: %(message)s"
             cors_origins = []
+            cors_origin_regex = None
             jwt_secret_key = "change_this_secret"
             jwt_algorithm = "HS256"
             jwt_expiration_minutes = 60

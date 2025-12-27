@@ -35,6 +35,7 @@
         "projectId": "paperboi-mobile"
       },
       "apiBaseUrl": "${EXPO_PUBLIC_API_BASE_URL}",
+      "webApiBaseUrl": "${EXPO_PUBLIC_WEB_API_BASE_URL}",
       "firebaseApiKey": "${EXPO_PUBLIC_FIREBASE_API_KEY}",
       "firebaseProjectId": "${EXPO_PUBLIC_FIREBASE_PROJECT_ID}",
       "appVersion": "${EXPO_PUBLIC_APP_VERSION}",

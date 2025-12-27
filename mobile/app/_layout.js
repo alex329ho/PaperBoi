@@ -5,7 +5,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PaperProvider } from 'react-native-paper';
-import { useFonts } from 'expo-font';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Asset } from 'expo-asset';
+import { FontDisplay, useFonts } from 'expo-font';
+import { Platform } from 'react-native';
 import { store, persistor } from '../store/store';
 import AppErrorBoundary from '../components/common/ErrorBoundary';
 import OfflineBanner from '../components/common/OfflineBanner';
@@ -52,20 +55,53 @@ export function ErrorBoundary({ children }) {
 }
 
 const RootLayout = () => {
-  const [fontsLoaded] = useFonts({
-    'RozhaOne-Regular': require('../assets/fonts/RozhaOne-Regular.ttf'),
-    'RozhaOne-Bold': require('../assets/fonts/RozhaOne-Bold.ttf'),
-    'RozhaOne-SemiBold': require('../assets/fonts/RozhaOne-SemiBold.ttf'),
-    'RozhaOne-Medium': require('../assets/fonts/RozhaOne-Medium.ttf'),
+  const rozhaRegular = require('../assets/fonts/RozhaOne-Regular.ttf');
+  const rozhaBold = require('../assets/fonts/RozhaOne-Bold.ttf');
+  const iconFont = MaterialCommunityIcons.font;
+  const iconFontEntries = Object.keys(iconFont).reduce((acc, fontFamily) => {
+    const source = iconFont[fontFamily];
+    acc[fontFamily] =
+      Platform.OS === 'web'
+        ? {
+            uri: Asset.fromModule(source).uri,
+            display: FontDisplay.OPTIONAL,
+          }
+        : source;
+    return acc;
+  }, {});
+
+  const [fontsLoaded, fontError] = useFonts({
+    ...iconFontEntries,
+    ...(Platform.OS === 'web'
+      ? {
+          'RozhaOne-Regular': {
+            uri: Asset.fromModule(rozhaRegular).uri,
+            display: FontDisplay.OPTIONAL,
+          },
+          'RozhaOne-Bold': {
+            uri: Asset.fromModule(rozhaBold).uri,
+            display: FontDisplay.OPTIONAL,
+          },
+        }
+      : {
+          'RozhaOne-Regular': rozhaRegular,
+          'RozhaOne-Bold': rozhaBold,
+        }),
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
+    if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) return null;
+  useEffect(() => {
+    if (fontError) {
+      console.warn('Font loading error', fontError);
+    }
+  }, [fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <Provider store={store}>

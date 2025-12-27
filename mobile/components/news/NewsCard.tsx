@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { IconButton, Text, useTheme } from 'react-native-paper';
 import { Article } from '../../store/slices/newsSlice';
 import { formatDate } from '../../utils/date';
@@ -47,7 +47,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
           borderColor: colors.outline,
         },
       ]}
-      accessibilityRole="button"
+      accessibilityRole={Platform.OS === 'web' ? 'link' : 'button'}
       accessibilityLabel={`Open article ${article.title}`}
     >
       {article.imageUrl ? (

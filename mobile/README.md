@@ -62,6 +62,7 @@ assets/                       # Images and fonts
 3. **Environment variables**
    - Copy `.env.example` to `.env.local` and update values.
    - Expo automatically loads `EXPO_PUBLIC_*` variables.
+   - For web development, set `EXPO_PUBLIC_WEB_API_BASE_URL=http://localhost:8000` and start Expo with a localhost/lan connection to avoid HTTPS mixed-content issues.
 
 4. **Run the app**
    ```bash
@@ -69,6 +70,11 @@ assets/                       # Images and fonts
    # or
    npm run android
    npm run ios
+   ```
+
+   If you are running the web app, prefer a localhost/lan dev server to keep the origin HTTP:
+   ```bash
+   EXPO_DEFAULT_CONNECTION=localhost npm run start -- --web
    ```
 
    > ℹ️ The `npm run start` script now defaults to the Expo **tunnel** connection for more reliable QR scanning from the iOS Camera/Expo Go. If you prefer LAN/localhost, set `EXPO_DEFAULT_CONNECTION=lan` (or `localhost`) before starting the dev server. You can run `npm start` from the repository root, and it will proxy to `mobile`.

@@ -21,6 +21,11 @@ const DEFAULT_NATIVE_BASE_URL =
       ? 'http://10.0.2.2:8000'
       : 'http://localhost:8000'
     : undefined;
+const isLocalWebOrigin =
+  Platform.OS === 'web' &&
+  typeof window !== 'undefined' &&
+  (window.location?.hostname === 'localhost' || window.location?.hostname === '127.0.0.1');
+const devWebFallback = __DEV__ && isLocalWebOrigin ? DEFAULT_WEB_BASE_URL : undefined;
 const normalizeBaseUrl = (url?: string) => {
   if (!url) return url;
   return url.replace(/\/api\/v1\/?$/, '');
@@ -29,28 +34,61 @@ const isTemplateValue = (value?: string) =>
   Boolean(value) && value?.includes('${');
 const resolvedBaseUrl = (() => {
   const extraBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl;
+  const extraWebBaseUrl = Constants.expoConfig?.extra?.webApiBaseUrl;
   const envBaseUrl = !isTemplateValue(extraBaseUrl)
     ? extraBaseUrl
     : process.env.EXPO_PUBLIC_API_BASE_URL;
+  const envWebBaseUrl = !isTemplateValue(extraWebBaseUrl)
+    ? extraWebBaseUrl
+    : process.env.EXPO_PUBLIC_WEB_API_BASE_URL;
   if (Platform.OS === 'web') {
-    return normalizeBaseUrl(envBaseUrl || DEFAULT_WEB_BASE_URL);
+    return normalizeBaseUrl(envWebBaseUrl || devWebFallback || envBaseUrl || DEFAULT_WEB_BASE_URL);
   }
   return normalizeBaseUrl(envBaseUrl || DEFAULT_NATIVE_BASE_URL);
 })();
 
 if (__DEV__) {
-  const baseUrlSource = !isTemplateValue(Constants.expoConfig?.extra?.apiBaseUrl)
-    ? 'expo.extra.apiBaseUrl'
-    : process.env.EXPO_PUBLIC_API_BASE_URL
-      ? 'EXPO_PUBLIC_API_BASE_URL'
-      : Platform.OS === 'web'
+  const extraBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl;
+  const extraWebBaseUrl = Constants.expoConfig?.extra?.webApiBaseUrl;
+  const envBaseUrl = !isTemplateValue(extraBaseUrl)
+    ? extraBaseUrl
+    : process.env.EXPO_PUBLIC_API_BASE_URL;
+  const envWebBaseUrl = !isTemplateValue(extraWebBaseUrl)
+    ? extraWebBaseUrl
+    : process.env.EXPO_PUBLIC_WEB_API_BASE_URL;
+  const hasEnvWebBaseUrl = Boolean(envWebBaseUrl);
+  const hasEnvBaseUrl = Boolean(envBaseUrl);
+  const baseUrlSource = Platform.OS === 'web'
+    ? hasEnvWebBaseUrl
+      ? !isTemplateValue(extraWebBaseUrl)
+        ? 'expo.extra.webApiBaseUrl'
+        : 'EXPO_PUBLIC_WEB_API_BASE_URL'
+      : devWebFallback
         ? 'DEFAULT_WEB_BASE_URL'
+        : hasEnvBaseUrl
+          ? !isTemplateValue(extraBaseUrl)
+            ? 'expo.extra.apiBaseUrl'
+            : 'EXPO_PUBLIC_API_BASE_URL'
+          : 'DEFAULT_WEB_BASE_URL'
+    : !isTemplateValue(extraBaseUrl)
+      ? 'expo.extra.apiBaseUrl'
+      : process.env.EXPO_PUBLIC_API_BASE_URL
+        ? 'EXPO_PUBLIC_API_BASE_URL'
         : DEFAULT_NATIVE_BASE_URL
           ? 'DEFAULT_NATIVE_BASE_URL'
           : 'unset';
   console.log(`[API] Base URL: ${resolvedBaseUrl ?? 'undefined'} (source: ${baseUrlSource})`);
   if (!resolvedBaseUrl) {
     console.warn('[API] No base URL configured; requests will fail.');
+  }
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const isHttpsOrigin = window.location?.protocol === 'https:';
+    const isHttpApi = resolvedBaseUrl?.startsWith('http://');
+    if (isHttpsOrigin && isHttpApi) {
+      console.warn(
+        '[API] Web origin is HTTPS but API base URL is HTTP; use localhost/lan dev server or HTTPS API to avoid mixed content blocking.',
+      );
+    }
   }
 }
 
