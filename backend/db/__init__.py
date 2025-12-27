@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from backend.models import email_log, news, user  # noqa: F401 - ensure metadata registration
+from backend.models import email_log, gdelt_raw, news, user  # noqa: F401 - ensure metadata registration
 from backend.models.database import Base, engine
 
 

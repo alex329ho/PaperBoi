@@ -13,17 +13,57 @@ import {
 } from 'react-native-paper';
 import PreferenceForm from '../../components/settings/PreferenceForm';
 import { usePreferences } from '../../hooks/usePreferences';
+import { useAppDispatch } from '../../hooks/useRedux';
+import apiClient from '../../services/api';
+import { API_ENDPOINTS } from '../../services/endpoints';
+import { fetchFeed } from '../../store/slices/newsSlice';
+import { extractApiData } from '../../utils/api';
 
 const SettingsScreen = () => {
   const { preferences, savePreferences, saving, status, toggleTheme, mode } = usePreferences();
+  const dispatch = useAppDispatch();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [fetchingSample, setFetchingSample] = useState(false);
 
   const formValues = useMemo(() => preferences, [preferences]);
 
   const onSave = async (values: typeof preferences) => {
     await savePreferences(values);
-    setShowToast(true);
+    setToastMessage('Preferences saved');
+  };
+
+  const fetchSampleArticles = async () => {
+    if (fetchingSample) return;
+    setFetchingSample(true);
+    try {
+      const response = await apiClient.post(API_ENDPOINTS.news.fetchFresh, {
+        query: 'ai',
+        timespan: '1day',
+      });
+      const payload = extractApiData<unknown>(response.data);
+      const responseBody = response.data as Record<string, unknown> | undefined;
+      const savedCount =
+        responseBody && typeof responseBody.saved_count === 'number'
+          ? responseBody.saved_count
+          : typeof responseBody?.savedCount === 'number'
+            ? responseBody.savedCount
+            : undefined;
+      const count = Array.isArray(payload) ? payload.length : 0;
+      const savedLabel =
+        typeof savedCount === 'number' ? ` (saved ${savedCount})` : '';
+      setToastMessage(
+        count
+          ? `Fetched ${count} sample articles from GDELT${savedLabel}.`
+          : 'Fetch completed, but no articles were returned.',
+      );
+      dispatch(fetchFeed({ page: 1 }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to fetch sample articles';
+      setToastMessage(message);
+    } finally {
+      setFetchingSample(false);
+    }
   };
 
   return (
@@ -57,6 +97,23 @@ const SettingsScreen = () => {
       ) : status === 'error' ? (
         <Text style={{ marginTop: 12, color: 'red' }}>Unable to save preferences. Try again.</Text>
       ) : null}
+
+      <Divider style={{ marginVertical: 12 }} />
+
+      <List.Section title="Developer" accessibilityRole="header">
+        <Text style={{ marginBottom: 8 }}>
+          Pull a fresh batch of real articles from GDELT to seed the mobile feed.
+        </Text>
+        <Button
+          mode="outlined"
+          icon="cloud-download"
+          onPress={fetchSampleArticles}
+          loading={fetchingSample}
+          disabled={fetchingSample}
+        >
+          Fetch sample articles
+        </Button>
+      </List.Section>
 
       <Divider style={{ marginVertical: 12 }} />
 
@@ -108,12 +165,12 @@ const SettingsScreen = () => {
       </Portal>
 
       <Snackbar
-        visible={showToast}
-        onDismiss={() => setShowToast(false)}
+        visible={Boolean(toastMessage)}
+        onDismiss={() => setToastMessage(null)}
         duration={3000}
         accessibilityLiveRegion="polite"
       >
-        Preferences saved
+        {toastMessage ?? ''}
       </Snackbar>
     </ScrollView>
   );

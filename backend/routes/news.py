@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.config import settings
 from backend.dependencies import get_db_session, get_gdelt_service, get_summarization_service
 from backend.middleware.rate_limit import RateLimiter
 from backend.models.news import NewsArticle, Summary
@@ -176,9 +177,19 @@ async def fetch_fresh(
         articles = await service.fetch_news(
             body.query, timespan=body.timespan, region=body.region, language=body.language
         )
-        await service.save_articles_to_db(articles)
+        saved_articles = await service.save_articles_to_db(articles)
     except GDELTRateLimitError as exc:
         logger.warning("Fresh fetch rate limited", extra={"error": str(exc)})
+        if settings.environment != "production":
+            fallback = await service._load_fallback_articles()
+            message = (
+                "GDELT rate limited; returned cached articles."
+                if fallback
+                else "GDELT rate limited; no cached articles available."
+            )
+            payload = envelope(fallback, message=message)
+            payload["saved_count"] = 0
+            return payload
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="GDELT rate limit reached. Try again later.",
@@ -189,7 +200,9 @@ async def fetch_fresh(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Upstream news provider unavailable",
         ) from exc
-    return envelope(articles, message="Fresh fetch triggered")
+    payload = envelope(articles, message="Fresh fetch triggered")
+    payload["saved_count"] = len(saved_articles)
+    return payload
 
 
 @router.get(

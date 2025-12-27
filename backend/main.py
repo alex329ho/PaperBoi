@@ -13,7 +13,7 @@ from backend.middleware.auth import JWTAuthMiddleware
 from backend.middleware.rate_limit import RateLimitMiddleware, RateLimiter
 from backend.middleware.error_handler import register_exception_handlers
 from backend.middleware.logging import RequestContextLogMiddleware
-from backend.models import news, user  # noqa: F401 - imported for metadata registration
+from backend.models import gdelt_raw, news, user  # noqa: F401 - imported for metadata registration
 from backend.models.database import Base, dispose_engine, get_session, validate_connection
 from backend.routes import auth_router, email_router, health_router, news_router, preferences_router
 from backend.tasks.scheduler import SchedulerManager

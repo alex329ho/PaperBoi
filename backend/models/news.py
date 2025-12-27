@@ -24,6 +24,7 @@ class NewsArticle(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(512), nullable=False)
     url: Mapped[str] = mapped_column(String(2048), nullable=False, unique=True)
+    url_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, unique=True, index=True)
     domain: Mapped[Optional[str]] = mapped_column(String(255))
     source: Mapped[Optional[str]] = mapped_column(String(255))
     published_date: Mapped[Optional[date]] = mapped_column(Date())

@@ -16,13 +16,17 @@ from bs4 import BeautifulSoup
 from redis.asyncio import Redis
 from requests import Response
 from requests.adapters import HTTPAdapter
-from sqlalchemy import select
+from sqlalchemy import or_, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from backend.config import settings
+from backend.models.gdelt_raw import GdeltRawArticle
 from backend.models.news import NewsArticle
-from backend.schemas.gdelt import GdeltResponse
+from backend.schemas.gdelt import GdeltArticle, GdeltResponse
 from backend.services.exceptions import (
     GDELTContentFetchError,
     GDELTDatabaseError,
@@ -50,6 +54,17 @@ class GDELTService:
     CACHE_KEY_PREFIX = "gdelt:cache"
     URL_HASH_SET = "gdelt:url_hashes"
     RATE_LIMIT_KEY = "gdelt:daily_requests"
+    TRACKING_PARAMS = {
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_term",
+        "utm_content",
+        "gclid",
+        "fbclid",
+        "mc_cid",
+        "mc_eid",
+    }
 
     def __init__(
         self,
@@ -100,7 +115,7 @@ class GDELTService:
             normalized = timespan.strip().lower()
             if not self._is_valid_timespan(normalized):
                 raise GDELTInvalidParameterError(
-                    "Timespan must be a number plus unit (h, d, w, m, y) or full words like 'hours', 'days', 'weeks', 'months', 'years'"
+                    "Timespan must be a number plus unit (h, d, w, m, y, min) or full words like 'minutes', 'hours', 'days', 'weeks', 'months', 'years'"
                 )
 
         if region and len(region) != 2:
@@ -138,7 +153,26 @@ class GDELTService:
             return [self._normalize_article_types(article) for article in cached_articles]
 
         self.logger.info("Requesting GDELT articles", extra={"params": params})
-        response_data = await self._execute_request(params)
+        try:
+            response_data = await self._execute_request(params)
+        except GDELTRateLimitError:
+            if settings.environment != "production":
+                fallback = await self._load_fallback_articles()
+                if fallback:
+                    self.logger.info(
+                        "Using fallback articles due to GDELT rate limit",
+                        extra={"count": len(fallback)},
+                    )
+                    return fallback
+                self.logger.warning("GDELT rate limited and no fallback articles available")
+                return []
+            raise
+        raw_articles = response_data.get("articles", []) if isinstance(response_data, dict) else []
+        if raw_articles:
+            try:
+                await self._save_raw_articles(raw_articles)
+            except Exception as exc:  # noqa: BLE001
+                self.logger.warning("Failed to persist raw GDELT payloads", extra={"error": str(exc)})
         articles = self.parse_gdelt_response(response_data)
         await self.redis.set(cache_key, json.dumps(articles, default=str), ex=self.cache_ttl_seconds)
         return articles
@@ -210,10 +244,13 @@ class GDELTService:
                 continue
 
             published_date = art.seen_datetime.date() if art.seen_datetime else None
+            canonical_url = self._canonicalize_url(str(art.url))
+            url_hash = self._compute_url_hash(canonical_url)
             parsed.append(
                 {
                     "title": art.title or "",
-                    "url": str(art.url),
+                    "url": canonical_url,
+                    "url_hash": url_hash,
                     "domain": art.domain,
                     "source": art.sourcename or art.domain,
                     "published_date": published_date,
@@ -264,30 +301,94 @@ class GDELTService:
         """Persist parsed articles into the database with deduplication."""
 
         saved_articles: List[NewsArticle] = []
+        skipped_cache = 0
+        skipped_db = 0
+
+        if not articles:
+            return saved_articles
+
+        normalized: List[Dict[str, Any]] = []
+        seen_hashes: set[str] = set()
         for payload in articles:
-            url = payload["url"]
-            url_hash = hash_url(url)
-            if await self.redis.sismember(self.URL_HASH_SET, url_hash):
-                self.logger.debug("Skipping cached duplicate", extra={"url": url})
+            url = payload.get("url")
+            if not url:
                 continue
-
-            existing = await self.db_session.execute(select(NewsArticle).where(NewsArticle.url == url))
-            if existing.scalar_one_or_none():
+            canonical_url = self._canonicalize_url(url)
+            url_hash = payload.get("url_hash") or self._compute_url_hash(canonical_url)
+            if url_hash in seen_hashes:
+                skipped_db += 1
                 continue
+            seen_hashes.add(url_hash)
+            normalized.append({**payload, "url": canonical_url, "url_hash": url_hash})
 
-            article = NewsArticle(**payload)
-            self.db_session.add(article)
-            saved_articles.append(article)
-            await self.redis.sadd(self.URL_HASH_SET, url_hash)
+        if settings.environment == "production":
+            filtered: List[Dict[str, Any]] = []
+            for payload in normalized:
+                url_hash = payload["url_hash"]
+                if await self.redis.sismember(self.URL_HASH_SET, url_hash):
+                    self.logger.debug("Skipping cached duplicate", extra={"url": payload["url"]})
+                    skipped_cache += 1
+                    continue
+                filtered.append(payload)
+            normalized = filtered
+
+        if not normalized:
+            self.logger.info(
+                "GDELT save results",
+                extra={"saved": 0, "skipped_cache": skipped_cache, "skipped_db": skipped_db, "total": len(articles)},
+            )
+            return saved_articles
+
+        url_hashes = [payload["url_hash"] for payload in normalized]
+        urls = [payload["url"] for payload in normalized]
+        existing = await self.db_session.execute(
+            select(NewsArticle.url_hash, NewsArticle.url).where(
+                or_(NewsArticle.url_hash.in_(url_hashes), NewsArticle.url.in_(urls))
+            )
+        )
+        existing_rows = existing.all()
+        existing_hashes = {row[0] for row in existing_rows if row[0]}
+        existing_urls = {row[1] for row in existing_rows if row[1]}
+
+        new_payloads: List[Dict[str, Any]] = []
+        for payload in normalized:
+            if payload["url_hash"] in existing_hashes or payload["url"] in existing_urls:
+                skipped_db += 1
+                continue
+            new_payloads.append(payload)
 
         try:
-            if saved_articles:
+            if new_payloads:
+                insert_fn = sqlite_insert if self._is_sqlite() else pg_insert
+                stmt = insert_fn(NewsArticle).values(new_payloads).on_conflict_do_nothing(
+                    index_elements=["url_hash"]
+                )
+                await self.db_session.execute(stmt)
                 await self.db_session.commit()
-                for article in saved_articles:
-                    await self.db_session.refresh(article)
+
+                inserted_hashes = [payload["url_hash"] for payload in new_payloads]
+                result = await self.db_session.execute(
+                    select(NewsArticle).where(NewsArticle.url_hash.in_(inserted_hashes))
+                )
+                saved_articles = result.scalars().all()
+
+                if settings.environment == "production" and saved_articles:
+                    for article in saved_articles:
+                        if article.url_hash:
+                            await self.redis.sadd(self.URL_HASH_SET, article.url_hash)
         except SQLAlchemyError as exc:  # pragma: no cover - requires DB failure
             await self.db_session.rollback()
             raise GDELTDatabaseError("Failed to save articles") from exc
+        finally:
+            self.logger.info(
+                "GDELT save results",
+                extra={
+                    "saved": len(saved_articles),
+                    "skipped_cache": skipped_cache,
+                    "skipped_db": skipped_db,
+                    "total": len(articles),
+                },
+            )
 
         return saved_articles
 
@@ -323,7 +424,116 @@ class GDELTService:
 
         return normalized
 
+    def _is_sqlite(self) -> bool:
+        return settings.database_url.startswith("sqlite")
+
+    def _canonicalize_url(self, raw_url: str) -> str:
+        cleaned = raw_url.strip()
+        try:
+            parts = urlsplit(cleaned)
+        except ValueError:
+            return cleaned
+
+        scheme = (parts.scheme or "https").lower()
+        host = (parts.hostname or "").lower()
+        if not host:
+            return cleaned
+
+        port = parts.port
+        if (scheme == "https" and port == 443) or (scheme == "http" and port == 80):
+            port = None
+        netloc = host if port is None else f"{host}:{port}"
+
+        path = parts.path or "/"
+        if path != "/" and path.endswith("/"):
+            path = path[:-1]
+
+        query_params = [
+            (key, value)
+            for key, value in parse_qsl(parts.query, keep_blank_values=False)
+            if key.lower() not in self.TRACKING_PARAMS
+        ]
+        query_params.sort(key=lambda kv: (kv[0], kv[1]))
+        query = urlencode(query_params)
+
+        return urlunsplit((scheme, netloc, path, query, ""))
+
+    def _compute_url_hash(self, canonical_url: str) -> str:
+        return hash_url(canonical_url)
+
+    async def _save_raw_articles(self, raw_articles: List[Dict[str, Any]]) -> None:
+        if not raw_articles or self.db_session is None:
+            return
+
+        rows: List[Dict[str, Any]] = []
+        for raw in raw_articles:
+            raw_url = raw.get("url")
+            if not raw_url:
+                continue
+            try:
+                art = GdeltArticle.model_validate(raw)
+                canonical_url = self._canonicalize_url(str(art.url))
+                seendate = art.seen_datetime
+                sourcecountry = art.sourcecountry
+                language = art.language
+            except Exception:
+                canonical_url = self._canonicalize_url(str(raw_url))
+                seendate = None
+                sourcecountry = raw.get("sourcecountry")
+                language = raw.get("language")
+
+            url_hash = self._compute_url_hash(canonical_url)
+            rows.append(
+                {
+                    "url": canonical_url,
+                    "url_hash": url_hash,
+                    "seendate": seendate,
+                    "sourcecountry": sourcecountry,
+                    "language": language,
+                    "raw": raw,
+                }
+            )
+
+        if not rows:
+            return
+
+        insert_fn = sqlite_insert if self._is_sqlite() else pg_insert
+        stmt = insert_fn(GdeltRawArticle).values(rows).on_conflict_do_nothing(
+            index_elements=["url_hash"]
+        )
+        await self.db_session.execute(stmt)
+
+    async def _load_fallback_articles(self, limit: int = 10) -> List[Dict[str, Any]]:
+        if self.db_session is None:
+            return []
+        try:
+            result = await self.db_session.execute(
+                select(NewsArticle).order_by(NewsArticle.created_at.desc()).limit(limit)
+            )
+            articles = result.scalars().all()
+        except Exception as exc:  # noqa: BLE001
+            self.logger.warning("Failed to load fallback articles", extra={"error": str(exc)})
+            return []
+        return [self._article_to_payload(article) for article in articles]
+
+    @staticmethod
+    def _article_to_payload(article: NewsArticle) -> Dict[str, Any]:
+        return {
+            "title": article.title,
+            "url": article.url,
+            "url_hash": article.url_hash,
+            "domain": article.domain,
+            "source": article.source,
+            "published_date": article.published_date,
+            "content": article.content,
+            "tone": article.tone,
+            "location": article.location,
+            "language": article.language,
+        }
+
     async def _enforce_rate_limit(self) -> None:
+        if settings.environment != "production":
+            return
         current = await self.redis.incr(self.RATE_LIMIT_KEY)
         if current == 1:
             await self.redis.expire(self.RATE_LIMIT_KEY, 24 * 60 * 60)
@@ -364,11 +574,33 @@ class GDELTService:
     def _is_valid_timespan(self, value: str) -> bool:
         if not value:
             return False
-        units = ("h", "d", "w", "m", "y", "hour", "hours", "day", "days", "week", "weeks", "month", "months", "year", "years")
+        units = (
+            "minutes",
+            "minute",
+            "hours",
+            "hour",
+            "days",
+            "day",
+            "weeks",
+            "week",
+            "months",
+            "month",
+            "years",
+            "year",
+            "mins",
+            "min",
+            "h",
+            "d",
+            "w",
+            "m",
+            "y",
+        )
         for unit in units:
             if value.endswith(unit):
                 digits = value[: -len(unit)].strip()
-                return digits.isdigit()
+                if digits.isdigit():
+                    return True
+                continue
         return False
 
     def _retry_after_seconds(self, response: Response) -> int:
@@ -381,13 +613,31 @@ class GDELTService:
                 return self.DEFAULT_RETRY_AFTER_SECONDS
         return self.DEFAULT_RETRY_AFTER_SECONDS
 
+    async def _get_ttl(self, key: str) -> int | None:
+        ttl_func = getattr(self.redis, "ttl", None)
+        if callable(ttl_func):
+            result = ttl_func(key)
+            return await result if asyncio.iscoroutine(result) else result
+        pttl_func = getattr(self.redis, "pttl", None)
+        if callable(pttl_func):
+            result = pttl_func(key)
+            ttl_ms = await result if asyncio.iscoroutine(result) else result
+            if ttl_ms is None:
+                return None
+            return int(ttl_ms / 1000) if ttl_ms >= 0 else ttl_ms
+        return None
+
     async def _check_cooldown(self) -> None:
-        ttl = await self.redis.ttl(self.COOLDOWN_KEY)
+        if settings.environment != "production":
+            return
+        ttl = await self._get_ttl(self.COOLDOWN_KEY)
         if ttl and ttl > 0:
             raise GDELTRateLimitError(
                 "GDELT cooldown active", details={"retry_after_seconds": ttl}
             )
 
     async def _set_cooldown(self, seconds: int) -> None:
+        if settings.environment != "production":
+            return
         bounded = max(1, min(seconds, 300))
         await self.redis.set(self.COOLDOWN_KEY, "1", ex=bounded)

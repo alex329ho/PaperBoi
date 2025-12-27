@@ -6,6 +6,7 @@ const endpoints = {
     detail: (id: string | number) => `${API_PREFIX}/news/${id}`,
     search: `${API_PREFIX}/news/search`,
     trending: `${API_PREFIX}/news/trending`,
+    fetchFresh: `${API_PREFIX}/news/fetch-fresh`,
   },
   preferences: {
     get: `${API_PREFIX}/preferences`,
@@ -31,6 +32,7 @@ export const API_ENDPOINTS = {
     detail: (id: string | number) => `/api/v1/news/${id}`,
     search: '/api/v1/news/search',
     trending: '/api/v1/news/trending',
+    fetchFresh: '/api/v1/news/fetch-fresh',
   },
   preferences: {
     base: '/api/v1/preferences',
