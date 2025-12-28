@@ -11,6 +11,7 @@ import { fetchArticleDetail } from '../store/thunks/newsThunks';
 const ArticleDetail = () => {
   const router = useRouter();
   const { article_id } = useLocalSearchParams() as { article_id?: string };
+  const normalizedId = article_id ? String(article_id) : undefined;
   const { colors, dark } = useTheme();
   const dispatch = useAppDispatch();
   const { saved, toggleBookmark, shareArticle, openExternal } = useNews();
@@ -18,9 +19,15 @@ const ArticleDetail = () => {
   const searchResults = useAppSelector((state) => state.news.search.results);
 
   const article = useAppSelector(
-    (state) =>
-      state.news.feed.items.find((item) => item.id === article_id) ||
-      state.news.search.results.find((item) => item.id === article_id),
+    (state) => {
+      if (!normalizedId) return undefined;
+      const matchesId = (item: { id: string | number }) => String(item.id) === normalizedId;
+      return (
+        state.news.feed.items.find(matchesId) ||
+        state.news.search.results.find(matchesId) ||
+        state.news.articles.find(matchesId)
+      );
+    },
   );
 
   useEffect(() => {
@@ -44,8 +51,10 @@ const ArticleDetail = () => {
     );
   }
 
-  const isSaved = saved.some((item) => item.id === article.id);
-  const related = [...items, ...searchResults].filter((item) => item.id !== article.id).slice(0, 6);
+  const isSaved = saved.some((item) => String(item.id) === String(article.id));
+  const related = [...items, ...searchResults]
+    .filter((item) => !normalizedId || String(item.id) !== normalizedId)
+    .slice(0, 6);
   const readingTimeLabel = article.readingTime ? `${article.readingTime} min read` : 'Quick read';
   const lead = article.summary || article.content;
   const showSummaryCard = Boolean(article.summary && article.content);
