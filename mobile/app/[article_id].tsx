@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlatList, Image, ImageBackground, Linking, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Chip, IconButton, Text, useTheme } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button, Card, Chip, IconButton, Text, useTheme } from 'react-native-paper';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { formatDate } from '../utils/date';
 import { getFaviconUrl, getGeneratedPalette, getInitials } from '../utils/image';
 import SummaryCard from '../components/summary/SummaryCard';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import LoadingAnimation from '../components/common/LoadingAnimation';
 import { useNews } from '../hooks/useNews';
 import { fetchArticleDetail, generateSummary } from '../store/thunks/newsThunks';
 
@@ -82,7 +85,7 @@ const ArticleDetail = () => {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 }}>
         {loading ? (
-          <ActivityIndicator />
+          <LoadingSpinner />
         ) : (
           <Text accessibilityRole="alert">Article not found. Try refreshing.</Text>
         )}
@@ -111,9 +114,11 @@ const ArticleDetail = () => {
   const faviconFallback = getInitials(article.source || article.title || article.url);
   const heroTextColor = dark ? colors.onSurface : colors.onPrimary;
   const graphBarColor = colors.primary;
+  const sectionTitleStyle = { fontSize: 20, lineHeight: 26 };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={styles.heroWrapper}>
         {article.imageUrl ? (
           <ImageBackground source={{ uri: article.imageUrl }} style={styles.hero} resizeMode="cover">
@@ -141,10 +146,16 @@ const ArticleDetail = () => {
               </View>
             </View>
             <View style={styles.heroContent}>
-              <Text variant="headlineLarge" style={[styles.heroTitle, { color: heroTextColor }]}>
+              <Text
+                variant="displaySmall"
+                style={[styles.heroTitle, { color: heroTextColor, fontSize: 30, lineHeight: 36 }]}
+              >
                 {article.title}
               </Text>
-              <Text variant="labelLarge" style={{ color: heroTextColor }}>
+              <Text
+                variant="titleMedium"
+                style={{ color: heroTextColor, fontSize: 18, lineHeight: 24 }}
+              >
                 {article.source} • {formatDate(article.publishedAt)} • {readingTimeLabel}
               </Text>
             </View>
@@ -187,9 +198,15 @@ const ArticleDetail = () => {
       <View style={styles.body}>
         {normalizedReport ? (
           <View style={{ gap: 12 }}>
-            <SummaryCard title="Summary" summary={normalizedReport.summary} expandable />
+            <SummaryCard
+              title="Summary"
+              summary={normalizedReport.summary}
+              expandable
+              defaultExpanded
+              titleStyle={sectionTitleStyle}
+            />
             <Card mode="outlined" style={styles.reportCard}>
-              <Card.Title title="Key Insights" />
+              <Card.Title title="Key Insights" titleStyle={sectionTitleStyle} />
               <Card.Content>
                 {normalizedReport.key_insights.map((item, index) => (
                   <Text key={`insight-${index}`} style={styles.bullet}>
@@ -199,7 +216,7 @@ const ArticleDetail = () => {
               </Card.Content>
             </Card>
             <Card mode="outlined" style={styles.reportCard}>
-              <Card.Title title="Implications" />
+              <Card.Title title="Implications" titleStyle={sectionTitleStyle} />
               <Card.Content>
                 {normalizedReport.implications.map((item, index) => (
                   <Text key={`implication-${index}`} style={styles.bullet}>
@@ -209,7 +226,7 @@ const ArticleDetail = () => {
               </Card.Content>
             </Card>
             <Card mode="outlined" style={styles.reportCard}>
-              <Card.Title title="Outlook" />
+              <Card.Title title="Outlook" titleStyle={sectionTitleStyle} />
               <Card.Content>
                 {normalizedReport.outlook.map((item, index) => (
                   <Text key={`outlook-${index}`} style={styles.bullet}>
@@ -219,7 +236,7 @@ const ArticleDetail = () => {
               </Card.Content>
             </Card>
             <Card mode="outlined" style={styles.reportCard}>
-              <Card.Title title="Risks" />
+              <Card.Title title="Risks" titleStyle={sectionTitleStyle} />
               <Card.Content>
                 {normalizedReport.risks.map((item, index) => (
                   <Text key={`risk-${index}`} style={styles.bullet}>
@@ -229,7 +246,7 @@ const ArticleDetail = () => {
               </Card.Content>
             </Card>
             <Card mode="outlined" style={styles.reportCard}>
-              <Card.Title title="Action Items" />
+              <Card.Title title="Action Items" titleStyle={sectionTitleStyle} />
               <Card.Content>
                 {normalizedReport.action_items.map((item, index) => (
                   <Text key={`action-${index}`} style={styles.bullet}>
@@ -240,7 +257,10 @@ const ArticleDetail = () => {
             </Card>
             {normalizedReport.data_graph?.series?.length ? (
               <Card mode="outlined" style={styles.reportCard}>
-                <Card.Title title={normalizedReport.data_graph.title || 'Data'} />
+                <Card.Title
+                  title={normalizedReport.data_graph.title || 'Data'}
+                  titleStyle={sectionTitleStyle}
+                />
                 <Card.Content>
                   {(() => {
                     const series = normalizedReport.data_graph.series;
@@ -266,10 +286,16 @@ const ArticleDetail = () => {
             ) : null}
           </View>
         ) : summaryText ? (
-          <SummaryCard title="Summary" summary={summaryText} expandable />
+          <SummaryCard
+            title="Summary"
+            summary={summaryText}
+            expandable
+            defaultExpanded
+            titleStyle={sectionTitleStyle}
+          />
         ) : isSummarizing ? (
           <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-            <ActivityIndicator />
+            <LoadingAnimation size={80} accessibilityLabel="Generating report" />
             <Text variant="bodyMedium" style={{ marginTop: 8, color: colors.onSurfaceVariant }}>
               Generating report...
             </Text>
@@ -340,7 +366,8 @@ const ArticleDetail = () => {
           accessibilityLabel="Related articles"
         />
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

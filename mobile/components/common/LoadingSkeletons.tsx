@@ -1,7 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
-import { ActivityIndicator, useTheme } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 import NewsCardSkeleton from '../news/NewsCardSkeleton';
+import LoadingAnimation from './LoadingAnimation';
 
 interface LoadingSkeletonsProps {
   /** How many article skeletons to display. */
@@ -27,7 +28,7 @@ const LoadingSkeletons: React.FC<LoadingSkeletonsProps> = ({ count = 2, showSpin
         }}
       />
       {showSpinner ? (
-        <ActivityIndicator accessibilityLabel="Loading content" style={{ marginTop: 12 }} />
+        <LoadingAnimation size={96} style={{ marginTop: 12 }} accessibilityLabel="Loading content" />
       ) : null}
     </View>
   );

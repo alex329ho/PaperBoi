@@ -554,19 +554,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCSwiftPackageProductDependency section */
-		6F3C0B905A7C4F1C9A6B7D11 /* FirebaseCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			packageReference = A215E3B52EF6892C007FCC12 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCore;
-		};
-		6F3C0B925A7C4F1C9A6B7D11 /* FirebaseAnalytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			packageReference = A215E3B52EF6892C007FCC12 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalytics;
-		};
-/* End XCSwiftPackageProductDependency section */
-
 /* Begin XCRemoteSwiftPackageReference section */
 		A215E3B52EF6892C007FCC12 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -577,6 +564,17 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6F3C0B905A7C4F1C9A6B7D11 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FirebaseCore;
+		};
+		6F3C0B925A7C4F1C9A6B7D11 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FirebaseAnalytics;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }

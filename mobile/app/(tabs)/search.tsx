@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  ActivityIndicator,
   Button,
   Chip,
   Divider,
@@ -14,6 +14,7 @@ import {
 } from 'react-native-paper';
 import NewsCard from '../../components/news/NewsCard';
 import LoadingSkeletons from '../../components/common/LoadingSkeletons';
+import LoadingAnimation from '../../components/common/LoadingAnimation';
 import { useNews } from '../../hooks/useNews';
 import { Article } from '../../store/slices/newsSlice';
 
@@ -219,24 +220,26 @@ const SearchScreen = () => {
   const renderFooter = () =>
     search.loading && search.results.length ? (
       <View style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
-        <ActivityIndicator accessibilityLabel="Loading more search results" />
+        <LoadingAnimation size={72} accessibilityLabel="Loading more search results" />
       </View>
     ) : null;
 
   return (
-    <FlatList
-      data={search.results}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      ListHeaderComponent={renderHeader}
-      ListEmptyComponent={renderEmpty}
-      ListFooterComponent={renderFooter}
-      onEndReachedThreshold={0.3}
-      onEndReached={loadMoreResults}
-      contentContainerStyle={{ flexGrow: 1 }}
-      scrollEnabled={true}
-      accessibilityLabel="Search results"
-    />
+    <SafeAreaView style={{ flex: 1 }}>
+      <FlatList
+        data={search.results}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+        onEndReachedThreshold={0.3}
+        onEndReached={loadMoreResults}
+        contentContainerStyle={{ flexGrow: 1 }}
+        scrollEnabled={true}
+        accessibilityLabel="Search results"
+      />
+    </SafeAreaView>
   );
 };
 

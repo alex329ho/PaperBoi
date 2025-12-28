@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ActivityIndicator, useTheme } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 
 const NewsCardSkeleton: React.FC = () => {
   const { colors } = useTheme();
@@ -18,7 +18,6 @@ const NewsCardSkeleton: React.FC = () => {
         <View style={[styles.line, styles.titleLine, { backgroundColor: colors.surfaceVariant }]} />
         <View style={[styles.line, styles.bodyLine, { backgroundColor: colors.surfaceVariant }]} />
         <View style={[styles.line, styles.bodyLine, { backgroundColor: colors.surfaceVariant }]} />
-        <ActivityIndicator accessibilityLabel="Loading articles" />
       </View>
     </View>
   );

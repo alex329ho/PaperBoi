@@ -3,9 +3,9 @@ import type { MD3Typescale } from 'react-native-paper/lib/typescript/types';
 // Typography tokens used to construct the MD3 font configuration.
 export const typography = {
   fontFamily: {
-    regular: 'System',
-    medium: 'System',
-    bold: 'System',
+    regular: 'RozhaOne-Regular',
+    medium: 'RozhaOne-Medium',
+    bold: 'RozhaOne-Bold',
     mono: 'Menlo',
   },
   sizes: {

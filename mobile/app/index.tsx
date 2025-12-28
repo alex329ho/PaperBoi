@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { View, Image } from 'react-native';
+import { View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { APP_NAME, DESCRIPTION } from '../utils/constants';
+import LoadingAnimation from '../components/common/LoadingAnimation';
 
 const SplashScreen = () => {
   const router = useRouter();
@@ -17,7 +18,7 @@ const SplashScreen = () => {
 
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-      <Image source={require('../assets/images/logo.png')} style={{ width: 120, height: 120 }} />
+      <LoadingAnimation size={180} accessibilityLabel="Loading PaperBoi" />
       <Text variant="headlineMedium">{APP_NAME}</Text>
       <Text>{DESCRIPTION}</Text>
     </View>

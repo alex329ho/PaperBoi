@@ -83,7 +83,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
             {displayLabel}
           </Text>
         ) : null}
-        <Text variant={isFeatured ? 'titleLarge' : 'titleMedium'} style={styles.title}>
+        <Text variant="titleLarge" style={styles.title}>
           {article.title}
         </Text>
         {summary ? (

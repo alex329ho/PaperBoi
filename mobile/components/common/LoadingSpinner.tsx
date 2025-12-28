@@ -1,10 +1,10 @@
 import React from 'react';
-import { ActivityIndicator } from 'react-native-paper';
 import { View } from 'react-native';
+import LoadingAnimation from './LoadingAnimation';
 
 const LoadingSpinner: React.FC = () => (
   <View style={{ padding: 16, alignItems: 'center', justifyContent: 'center' }}>
-    <ActivityIndicator size="large" />
+    <LoadingAnimation size={120} accessibilityLabel="Loading content" />
   </View>
 );
 

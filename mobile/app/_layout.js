@@ -91,6 +91,8 @@ export function ErrorBoundary({ children }) {
 
 const RootLayout = () => {
   const rozhaRegular = require('../assets/fonts/RozhaOne-Regular.ttf');
+  const rozhaMedium = require('../assets/fonts/RozhaOne-Medium.ttf');
+  const rozhaSemiBold = require('../assets/fonts/RozhaOne-SemiBold.ttf');
   const rozhaBold = require('../assets/fonts/RozhaOne-Bold.ttf');
   const iconFont = MaterialCommunityIcons.font;
   const iconFontEntries = Object.keys(iconFont).reduce((acc, fontFamily) => {
@@ -113,6 +115,14 @@ const RootLayout = () => {
             uri: Asset.fromModule(rozhaRegular).uri,
             display: FontDisplay.OPTIONAL,
           },
+          'RozhaOne-Medium': {
+            uri: Asset.fromModule(rozhaMedium).uri,
+            display: FontDisplay.OPTIONAL,
+          },
+          'RozhaOne-SemiBold': {
+            uri: Asset.fromModule(rozhaSemiBold).uri,
+            display: FontDisplay.OPTIONAL,
+          },
           'RozhaOne-Bold': {
             uri: Asset.fromModule(rozhaBold).uri,
             display: FontDisplay.OPTIONAL,
@@ -120,6 +130,8 @@ const RootLayout = () => {
         }
       : {
           'RozhaOne-Regular': rozhaRegular,
+          'RozhaOne-Medium': rozhaMedium,
+          'RozhaOne-SemiBold': rozhaSemiBold,
           'RozhaOne-Bold': rozhaBold,
         }),
   });

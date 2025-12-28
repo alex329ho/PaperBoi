@@ -1,8 +1,9 @@
 import React from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { ActivityIndicator, Text, useTheme } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import NewsCard from './NewsCard';
 import NewsCardSkeleton from './NewsCardSkeleton';
+import LoadingAnimation from '../common/LoadingAnimation';
 import { Article } from '../../store/slices/newsSlice';
 
 interface NewsListProps {
@@ -63,7 +64,7 @@ const NewsList: React.FC<NewsListProps> = ({
       ListFooterComponent={
         hasNextPage && loadMore ? (
           <View style={{ paddingVertical: 16 }}>
-            <ActivityIndicator />
+            <LoadingAnimation size={72} accessibilityLabel="Loading more articles" />
           </View>
         ) : null
       }
