@@ -59,6 +59,17 @@ class OpenRouterService:
         "MEDIUM": "Summarize the following news article in 3-5 sentences. Include key facts and context.",
         "LONG": "Summarize the following news article in 6-10 sentences. Provide comprehensive overview.",
     }
+    REPORT_TEMPLATE = (
+        "Create a long-form news report from the article below. Return STRICT JSON only with keys: "
+        "summary (string, at least 250 words), key_insights (array of exactly 3 strings, each up to 50 words "
+        "and formatted exactly as: Insight 1: \"<direct quote>\", Insight 2: \"<direct quote>\", "
+        "Insight 3: \"<direct quote>\"), implications (array of strings, each up to 50 words), "
+        "outlook (array of strings, each up to 50 words), risks (array of strings, each up to 50 words), "
+        "action_items (array of strings, each up to 50 words), "
+        "data_graph (object with keys: title (string), type (string: bar|line), "
+        "series (array of objects with label (string) and value (number))). "
+        "Make the report detailed and actionable and base all claims on the article content."
+    )
 
     def __init__(
         self,
@@ -148,6 +159,38 @@ class OpenRouterService:
         ]
         return await asyncio.gather(*tasks)
 
+    async def generate_report(
+        self,
+        article: Dict[str, Any],
+        *,
+        length: str = "LONG",
+        article_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Generate a structured report in JSON for a single article."""
+
+        if not self.api_key:
+            raise OpenRouterAuthenticationError("OpenRouter API key is not configured")
+
+        cache_key = self._build_cache_key(f"report:{article_id or article.get('id')}", length)
+        cached = await self._get_cached_summary(cache_key)
+        if cached:
+            self.logger.info("Cache hit for report", extra={"length": length, "cache_key": cache_key})
+            try:
+                return json.loads(cached["summary"])
+            except json.JSONDecodeError:
+                pass
+
+        title = article.get("title", "")
+        text = article.get("content", "") or ""
+        prompt = f"{self.REPORT_TEMPLATE}\n\nTitle: {title}\n\nArticle:\n{text}"
+        request = self._build_request(prompt, stream=False, length=length)
+        response = await self._execute_request(request, stream=False)
+        content = self._extract_summary(response)
+        report = self._extract_json_report(content)
+        await self._cache_summary(cache_key, json.dumps(report), response.usage.model_dump())
+        self._record_usage(response)
+        return report
+
     def get_token_usage(self) -> Dict[str, Dict[str, int]]:
         """Return aggregated token usage metrics."""
 
@@ -216,11 +259,40 @@ class OpenRouterService:
             text = text[:12000]
         return f"{template}\n\nTitle: {title}\n\nArticle:\n{text}"
 
+    @staticmethod
+    def _extract_json_report(content: str) -> Dict[str, Any]:
+        """Parse a JSON object from the model output, fallback to empty report."""
+
+        start = content.find("{")
+        end = content.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            return {
+                "summary": content.strip(),
+                "key_insights": [],
+                "implications": [],
+                "outlook": [],
+                "risks": [],
+                "action_items": [],
+                "data_graph": {"title": "", "type": "bar", "series": []},
+            }
+        try:
+            return json.loads(content[start : end + 1])
+        except json.JSONDecodeError:
+            return {
+                "summary": content.strip(),
+                "key_insights": [],
+                "implications": [],
+                "outlook": [],
+                "risks": [],
+                "action_items": [],
+                "data_graph": {"title": "", "type": "bar", "series": []},
+            }
+
     def _build_request(self, prompt: str, *, stream: bool, length: str) -> ChatCompletionRequest:
         max_tokens = {
             "SHORT": 50,
             "MEDIUM": 150,
-            "LONG": 300,
+            "LONG": 900,
         }.get(length.upper(), 150)
 
         return ChatCompletionRequest(

@@ -15,7 +15,7 @@ const initialState: PreferencesState = {
   emailEnabled: true,
   notificationEnabled: true,
   notificationTime: '08:00',
-  summaryLength: 'MEDIUM',
+  summaryLength: 'LONG',
   emailFrequency: 'weekly',
   isLoading: false,
   error: null,

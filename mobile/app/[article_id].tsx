@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { FlatList, ImageBackground, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Image, ImageBackground, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Card, Chip, IconButton, Text, useTheme } from 'react-native-paper';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { formatDate } from '../utils/date';
+import { getFaviconUrl, getGeneratedPalette, getInitials } from '../utils/image';
 import SummaryCard from '../components/summary/SummaryCard';
 import { useNews } from '../hooks/useNews';
-import { fetchArticleDetail } from '../store/thunks/newsThunks';
+import { fetchArticleDetail, generateSummary } from '../store/thunks/newsThunks';
 
 const ArticleDetail = () => {
   const router = useRouter();
@@ -17,6 +18,10 @@ const ArticleDetail = () => {
   const { saved, toggleBookmark, shareArticle, openExternal } = useNews();
   const { items, loading } = useAppSelector((state) => state.news.feed);
   const searchResults = useAppSelector((state) => state.news.search.results);
+  const summaryLength = useAppSelector((state) => state.preferences.summaryLength);
+  const summaries = useAppSelector((state) => state.news.summaries);
+  const reports = useAppSelector((state) => state.news.reports);
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const article = useAppSelector(
     (state) => {
@@ -35,6 +40,43 @@ const ArticleDetail = () => {
       dispatch(fetchArticleDetail(article_id));
     }
   }, [article, article_id, dispatch]);
+
+  const summaryKey = article ? String(article.id) : normalizedId;
+  const summaryText = article?.summary ?? (summaryKey ? summaries[summaryKey] : undefined);
+  const report = summaryKey ? reports[summaryKey] : undefined;
+  const normalizedReport = report
+    ? {
+        summary: report.summary || summaryText || '',
+        key_insights: Array.isArray(report.key_insights) ? report.key_insights : [],
+        implications: Array.isArray(report.implications) ? report.implications : [],
+        outlook: Array.isArray(report.outlook)
+          ? report.outlook
+          : report.outlook
+            ? [report.outlook]
+            : [],
+        risks: Array.isArray(report.risks) ? report.risks : [],
+        action_items: Array.isArray(report.action_items) ? report.action_items : [],
+        data_graph: report.data_graph || { title: '', type: 'bar', series: [] },
+      }
+    : undefined;
+
+  useEffect(() => {
+    if (!article || !summaryKey || normalizedReport || isSummarizing) {
+      return;
+    }
+    setIsSummarizing(true);
+    const normalizedLength =
+      typeof summaryLength === 'string'
+        ? (summaryLength.toUpperCase() as 'SHORT' | 'MEDIUM' | 'LONG')
+        : 'MEDIUM';
+    const result = dispatch(
+      generateSummary({
+        articleId: summaryKey,
+        length: normalizedLength,
+      }),
+    );
+    Promise.resolve(result).finally(() => setIsSummarizing(false));
+  }, [article, dispatch, isSummarizing, normalizedReport, summaryKey, summaryLength]);
 
   if (!article) {
     return (
@@ -56,16 +98,19 @@ const ArticleDetail = () => {
     .filter((item) => !normalizedId || String(item.id) !== normalizedId)
     .slice(0, 6);
   const readingTimeLabel = article.readingTime ? `${article.readingTime} min read` : 'Quick read';
-  const lead = article.summary || article.content;
-  const showSummaryCard = Boolean(article.summary && article.content);
 
   const shareByEmail = () => {
     const subject = encodeURIComponent(article.title);
-    const body = encodeURIComponent(`${article.summary ?? ''}\n\n${article.url ?? ''}`);
+    const body = encodeURIComponent(`${normalizedReport?.summary ?? summaryText ?? ''}\n\n${article.url ?? ''}`);
     Linking.openURL(`mailto:?subject=${subject}&body=${body}`).catch(() => shareArticle(article));
   };
 
+  const heroSeed = article.source || article.url || article.title || 'paperboi';
+  const heroPalette = getGeneratedPalette(heroSeed);
+  const faviconUrl = getFaviconUrl(article.url);
+  const faviconFallback = getInitials(article.source || article.title || article.url);
   const heroTextColor = dark ? colors.onSurface : colors.onPrimary;
+  const graphBarColor = colors.primary;
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -105,7 +150,9 @@ const ArticleDetail = () => {
             </View>
           </ImageBackground>
         ) : (
-          <View style={[styles.heroFallback, { backgroundColor: colors.surfaceVariant }]}>
+          <View style={[styles.heroFallback, { backgroundColor: heroPalette.background }]}>
+            <View style={[styles.heroAccent, { backgroundColor: heroPalette.accent }]} />
+            <View style={[styles.heroGlow, { backgroundColor: heroPalette.text }]} />
             <View style={styles.heroTop}>
               <IconButton icon="arrow-left" onPress={() => router.back()} />
               <View style={styles.heroActions}>
@@ -116,8 +163,19 @@ const ArticleDetail = () => {
                 />
               </View>
             </View>
+            <View style={[styles.heroBadge, { borderColor: heroPalette.text }]}>
+              {faviconUrl ? (
+                <Image source={{ uri: faviconUrl }} style={styles.heroFavicon} resizeMode="contain" />
+              ) : (
+                <Text style={[styles.heroFallbackText, { color: heroPalette.text }]}>
+                  {faviconFallback}
+                </Text>
+              )}
+            </View>
             <View style={styles.heroContent}>
-              <Text variant="headlineLarge">{article.title}</Text>
+              <Text variant="headlineLarge" style={{ color: heroPalette.text }}>
+                {article.title}
+              </Text>
               <Text variant="labelLarge" style={{ color: colors.onSurfaceVariant }}>
                 {article.source} • {formatDate(article.publishedAt)} • {readingTimeLabel}
               </Text>
@@ -127,15 +185,100 @@ const ArticleDetail = () => {
       </View>
 
       <View style={styles.body}>
-        {lead ? (
-          <Text variant="bodyLarge" style={[styles.lead, { color: colors.onSurface }]}>
-            {lead}
+        {normalizedReport ? (
+          <View style={{ gap: 12 }}>
+            <SummaryCard title="Summary" summary={normalizedReport.summary} expandable />
+            <Card mode="outlined" style={styles.reportCard}>
+              <Card.Title title="Key Insights" />
+              <Card.Content>
+                {normalizedReport.key_insights.map((item, index) => (
+                  <Text key={`insight-${index}`} style={styles.bullet}>
+                    • {item}
+                  </Text>
+                ))}
+              </Card.Content>
+            </Card>
+            <Card mode="outlined" style={styles.reportCard}>
+              <Card.Title title="Implications" />
+              <Card.Content>
+                {normalizedReport.implications.map((item, index) => (
+                  <Text key={`implication-${index}`} style={styles.bullet}>
+                    • {item}
+                  </Text>
+                ))}
+              </Card.Content>
+            </Card>
+            <Card mode="outlined" style={styles.reportCard}>
+              <Card.Title title="Outlook" />
+              <Card.Content>
+                {normalizedReport.outlook.map((item, index) => (
+                  <Text key={`outlook-${index}`} style={styles.bullet}>
+                    • {item}
+                  </Text>
+                ))}
+              </Card.Content>
+            </Card>
+            <Card mode="outlined" style={styles.reportCard}>
+              <Card.Title title="Risks" />
+              <Card.Content>
+                {normalizedReport.risks.map((item, index) => (
+                  <Text key={`risk-${index}`} style={styles.bullet}>
+                    • {item}
+                  </Text>
+                ))}
+              </Card.Content>
+            </Card>
+            <Card mode="outlined" style={styles.reportCard}>
+              <Card.Title title="Action Items" />
+              <Card.Content>
+                {normalizedReport.action_items.map((item, index) => (
+                  <Text key={`action-${index}`} style={styles.bullet}>
+                    • {item}
+                  </Text>
+                ))}
+              </Card.Content>
+            </Card>
+            {normalizedReport.data_graph?.series?.length ? (
+              <Card mode="outlined" style={styles.reportCard}>
+                <Card.Title title={normalizedReport.data_graph.title || 'Data'} />
+                <Card.Content>
+                  {(() => {
+                    const series = normalizedReport.data_graph.series;
+                    const maxValue = Math.max(...series.map((item) => item.value), 1);
+                    return series.map((item, index) => (
+                      <View key={`graph-${index}`} style={styles.graphRow}>
+                        <Text style={styles.graphLabel}>{item.label}</Text>
+                        <View style={styles.graphTrack}>
+                          <View
+                            style={[
+                              styles.graphBar,
+                              { backgroundColor: graphBarColor },
+                              { width: `${Math.round((item.value / maxValue) * 100)}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.graphValue}>{item.value}</Text>
+                      </View>
+                    ));
+                  })()}
+                </Card.Content>
+              </Card>
+            ) : null}
+          </View>
+        ) : summaryText ? (
+          <SummaryCard title="Summary" summary={summaryText} expandable />
+        ) : isSummarizing ? (
+          <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+            <ActivityIndicator />
+            <Text variant="bodyMedium" style={{ marginTop: 8, color: colors.onSurfaceVariant }}>
+              Generating report...
+            </Text>
+          </View>
+        ) : (
+          <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>
+            Summary unavailable. Try again later.
           </Text>
-        ) : null}
-
-        {showSummaryCard ? (
-          <SummaryCard title="Summary" summary={article.content || ''} expandable />
-        ) : null}
+        )}
 
         <View style={styles.metaRow}>
           {article.region ? (
@@ -235,13 +378,73 @@ const styles = StyleSheet.create({
   heroFallback: {
     paddingBottom: 20,
   },
+  heroAccent: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.45,
+    transform: [{ skewY: '-6deg' }],
+  },
+  heroGlow: {
+    position: 'absolute',
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    opacity: 0.12,
+    top: -80,
+    right: -90,
+  },
+  heroBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 16,
+    marginTop: 8,
+    borderWidth: 1,
+  },
+  heroFavicon: {
+    width: 32,
+    height: 32,
+  },
+  heroFallbackText: {
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
   body: {
     padding: 16,
     gap: 12,
   },
-  lead: {
-    fontWeight: '600',
-    lineHeight: 24,
+  reportCard: {
+    backgroundColor: 'transparent',
+  },
+  bullet: {
+    marginBottom: 6,
+  },
+  graphRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  graphLabel: {
+    width: 90,
+  },
+  graphTrack: {
+    flex: 1,
+    height: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  graphBar: {
+    height: 8,
+    borderRadius: 999,
+  },
+  graphValue: {
+    width: 32,
+    textAlign: 'right',
   },
   metaRow: {
     flexDirection: 'row',

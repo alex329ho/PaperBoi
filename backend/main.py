@@ -55,13 +55,22 @@ app.add_middleware(RequestContextLogMiddleware)
 app.add_middleware(JWTAuthMiddleware)
 # Global rate limiter to complement endpoint-level limits
 app.add_middleware(RateLimitMiddleware, limiter=RateLimiter())
+cors_allow_headers = [
+    "Authorization",
+    "Content-Type",
+    "X-Client-Version",
+    "X-Platform",
+    "X-Request-Timestamp",
+    "X-Correlation-ID",
+    "X-Device-Platform",
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allow_origins,
     allow_origin_regex=settings.cors_origin_regex,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=not ("*" in settings.allow_origins and not settings.cors_origin_regex),
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=cors_allow_headers,
 )
 
 def register_routes(application: FastAPI) -> None:

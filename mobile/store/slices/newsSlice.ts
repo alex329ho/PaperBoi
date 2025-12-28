@@ -9,6 +9,7 @@ import {
 } from '../thunks/newsThunks';
 import {
   Article,
+  ArticleReport,
   FetchFeedParams,
   FilterState,
   NewsState,
@@ -32,6 +33,7 @@ const initialPagination: PaginationState = {
 const initialState: NewsState = {
   articles: [],
   summaries: {},
+  reports: {},
   bookmarkedIds: [],
   saved: [],
   recentSearches: [],
@@ -81,6 +83,9 @@ const newsSlice = createSlice({
     },
     setSummary(state, action: PayloadAction<{ id: string; summary: string }>) {
       state.summaries[action.payload.id] = action.payload.summary;
+    },
+    setReport(state, action: PayloadAction<{ id: string; report: ArticleReport }>) {
+      state.reports[action.payload.id] = action.payload.report;
     },
     toggleBookmark(state, action: PayloadAction<string>) {
       const id = action.payload;
@@ -178,6 +183,9 @@ const newsSlice = createSlice({
       })
       .addCase(generateSummary.fulfilled, (state, action) => {
         state.summaries[action.payload.id] = action.payload.summary;
+        if (action.payload.report) {
+          state.reports[action.payload.id] = action.payload.report;
+        }
       })
       .addCase(generateSummary.rejected, (state, action) => {
         state.error = action.error.message || 'Unable to generate summary';
@@ -237,6 +245,7 @@ export const {
   setArticles,
   addArticles,
   setSummary,
+  setReport,
   toggleBookmark,
   setFilter,
   setPage,

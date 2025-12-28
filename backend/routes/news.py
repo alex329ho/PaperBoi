@@ -56,7 +56,7 @@ class FreshFetchRequest(BaseModel):
 
 
 class SummaryRequest(BaseModel):
-    length: str = Field(default="MEDIUM", description="Desired summary length")
+    length: str = Field(default="LONG", description="Desired summary length")
 
 
 class TrendingTopic(BaseModel):
@@ -246,6 +246,7 @@ async def summarize_article(
     payload: SummaryRequest = Body(default_factory=SummaryRequest),
     session: AsyncSession = Depends(get_db_session),
     summarizer: SummarizationService = Depends(get_summarization_service),
+    gdelt_service: GDELTService = Depends(get_gdelt_service),
 ) -> Dict[str, Any]:
     """Generate and persist a summary for a given article."""
 
@@ -254,13 +255,36 @@ async def summarize_article(
     if not article:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
 
-    summary_text = await summarizer.summarize_article(article.__dict__, length=payload.length)
-    summary = Summary(article_id=article.id, summary_text=summary_text, length=len(summary_text))
+    if not article.content:
+        try:
+            fetched_content = await gdelt_service.fetch_article_content(article.url)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "Failed to fetch article content for summary",
+                extra={"article_id": article.id, "url": article.url, "error": str(exc)},
+            )
+            fetched_content = None
+        if fetched_content:
+            article.content = fetched_content
+            await session.commit()
+            await session.refresh(article)
+
+    article_payload = {
+        "id": article.id,
+        "title": article.title,
+        "content": article.content or article.title or "",
+    }
+    report = await summarizer.generate_report(article_payload, length=payload.length)
+    summary_text = report.get("summary") or ""
+    summary = Summary(article_id=article.id, summary_text=summary_text, length=len(summary_text.split()))
     session.add(summary)
     await session.commit()
     await session.refresh(summary)
 
-    return envelope(SummaryRead.model_validate(summary).model_dump())
+    response_payload = SummaryRead.model_validate(summary).model_dump()
+    response_payload["report"] = report
+    response_payload["summary"] = summary_text
+    return envelope(response_payload)
 
 
 __all__ = ["router"]

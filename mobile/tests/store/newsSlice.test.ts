@@ -7,6 +7,7 @@ import newsReducer, {
 const baseState: NewsState = {
   articles: [],
   summaries: {},
+  reports: {},
   bookmarkedIds: [],
   saved: [],
   recentSearches: [],

@@ -55,6 +55,9 @@ const buildStore = () => {
     preloadedState: {
       news: {
         ...baseNewsState,
+        summaries: {
+          '1': 'Generated summary for seeded article.',
+        },
         feed: {
           ...baseFeed,
           items: [
@@ -102,6 +105,8 @@ describe('ArticleDetail', () => {
     );
 
     expect(getByText('Seeded article')).toBeTruthy();
+    expect(getByText('Generated summary for seeded article.')).toBeTruthy();
+    expect(queryByText('Summary unavailable. Try again later.')).toBeNull();
     expect(queryByText('Article not found. Try refreshing.')).toBeNull();
   });
 });

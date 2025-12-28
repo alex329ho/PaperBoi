@@ -27,6 +27,20 @@ export type Article = {
   author?: string;
 };
 
+export type ArticleReport = {
+  summary: string;
+  key_insights: string[];
+  implications: string[];
+  outlook: string[];
+  risks: string[];
+  action_items: string[];
+  data_graph: {
+    title: string;
+    type: 'bar' | 'line';
+    series: { label: string; value: number }[];
+  };
+};
+
 export type PaginationState = {
   page: number;
   total: number;
@@ -76,6 +90,7 @@ export type AuthState = {
 export type NewsState = {
   articles: Article[];
   summaries: Record<string, string>;
+  reports: Record<string, ArticleReport>;
   bookmarkedIds: string[];
   saved: Article[];
   recentSearches: string[];

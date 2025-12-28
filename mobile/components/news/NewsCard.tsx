@@ -3,6 +3,7 @@ import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { IconButton, Text, useTheme } from 'react-native-paper';
 import { Article } from '../../store/slices/newsSlice';
 import { formatDate } from '../../utils/date';
+import { getFaviconUrl, getGeneratedPalette, getInitials } from '../../utils/image';
 import { truncate } from '../../utils/string';
 
 interface NewsCardProps {
@@ -36,6 +37,13 @@ const NewsCard: React.FC<NewsCardProps> = ({
   const summary = article.summary || article.content;
   const isFeatured = variant === 'featured';
   const displayLabel = label ?? (isFeatured ? 'Top story' : undefined);
+  const imageSeed = article.source || article.url || article.title || 'paperboi';
+  const palette = useMemo(() => getGeneratedPalette(imageSeed), [imageSeed]);
+  const initials = useMemo(
+    () => getInitials(article.source || article.title || article.url),
+    [article.source, article.title, article.url],
+  );
+  const faviconUrl = useMemo(() => getFaviconUrl(article.url), [article.url]);
 
   return (
     <Pressable
@@ -50,21 +58,25 @@ const NewsCard: React.FC<NewsCardProps> = ({
       accessibilityRole={Platform.OS === 'web' ? 'link' : 'button'}
       accessibilityLabel={`Open article ${article.title}`}
     >
-      {article.imageUrl ? (
-        <Image
-          source={{ uri: article.imageUrl }}
-          style={[styles.image, isFeatured && styles.featuredImage]}
-          resizeMode="cover"
-        />
-      ) : (
-        <View
-          style={[
-            styles.imagePlaceholder,
-            { backgroundColor: colors.surfaceVariant },
-            isFeatured && styles.featuredImage,
-          ]}
-        />
-      )}
+      <View
+        style={[
+          styles.imageBase,
+          isFeatured && styles.featuredImage,
+          { backgroundColor: palette.background },
+        ]}
+      >
+        <View style={[styles.imageAccent, { backgroundColor: palette.accent }]} />
+        <View style={[styles.imageGlow, { backgroundColor: palette.text }]} />
+        {faviconUrl ? (
+          <View style={[styles.faviconWrap, { borderColor: palette.text }]}>
+            <Image source={{ uri: faviconUrl }} style={styles.favicon} resizeMode="contain" />
+          </View>
+        ) : (
+          <Text variant="headlineSmall" style={[styles.imageInitials, { color: palette.text }]}>
+            {initials}
+          </Text>
+        )}
+      </View>
       <View style={styles.content}>
         {displayLabel ? (
           <Text variant="labelSmall" style={[styles.label, { color: colors.tertiary }]}>
@@ -140,16 +152,46 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     overflow: 'hidden',
   },
-  image: {
+  imageBase: {
     width: '100%',
     height: 180,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   featuredImage: {
     height: 220,
   },
-  imagePlaceholder: {
-    width: '100%',
-    height: 180,
+  imageAccent: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.45,
+    transform: [{ skewY: '-6deg' }],
+  },
+  imageGlow: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    opacity: 0.12,
+    top: -60,
+    right: -80,
+  },
+  imageInitials: {
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  faviconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  favicon: {
+    width: 32,
+    height: 32,
   },
   content: {
     padding: 16,

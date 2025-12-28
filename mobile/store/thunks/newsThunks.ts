@@ -4,7 +4,7 @@ import apiClient from '../../services/api';
 import { API_ENDPOINTS } from '../../services/endpoints';
 import { extractApiData, extractPagination } from '../../utils/api';
 import { addPendingAction } from '../slices/syncSlice';
-import { Article, FilterState, PaginationState, RootState } from '../types';
+import { Article, ArticleReport, FilterState, PaginationState, RootState } from '../types';
 
 const persistBookmarks = async (ids: string[]) => {
   await AsyncStorage.setItem('paperboi_bookmarks', JSON.stringify(ids));
@@ -132,7 +132,7 @@ export const fetchArticleDetail = createAsyncThunk<Article, string, { state: Roo
 );
 
 export const generateSummary = createAsyncThunk<
-  { id: string; summary: string },
+  { id: string; summary: string; report?: ArticleReport },
   { articleId: string; length: 'SHORT' | 'MEDIUM' | 'LONG' },
   { state: RootState }
 >('news/generateSummary', async ({ articleId, length }, thunkApi) => {
@@ -150,7 +150,8 @@ export const generateSummary = createAsyncThunk<
       (typeof payload.summary_text === 'string' && payload.summary_text) ||
       (typeof payload.summaryText === 'string' && payload.summaryText) ||
       '';
-    return { id: articleId, summary: summary as string };
+    const report = payload.report && typeof payload.report === 'object' ? (payload.report as ArticleReport) : undefined;
+    return { id: articleId, summary: summary as string, report };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected error generating summary';
     return thunkApi.rejectWithValue(message);
