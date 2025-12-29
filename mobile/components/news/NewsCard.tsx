@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { IconButton, Text, useTheme } from 'react-native-paper';
 import { Article } from '../../store/slices/newsSlice';
 import { formatDate } from '../../utils/date';
-import { getFaviconUrl, getGeneratedPalette, getInitials } from '../../utils/image';
+import { getFaviconUrl, getGeneratedPalette } from '../../utils/image';
 import { truncate } from '../../utils/string';
 
 interface NewsCardProps {
@@ -15,6 +15,105 @@ interface NewsCardProps {
   variant?: 'featured' | 'standard';
   label?: string;
 }
+
+const STOP_WORDS = new Set([
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'but',
+  'by',
+  'for',
+  'from',
+  'has',
+  'have',
+  'he',
+  'her',
+  'his',
+  'if',
+  'in',
+  'into',
+  'is',
+  'it',
+  'its',
+  'me',
+  'more',
+  'most',
+  'my',
+  'new',
+  'no',
+  'not',
+  'of',
+  'on',
+  'or',
+  'our',
+  'out',
+  'over',
+  'said',
+  'say',
+  'says',
+  'she',
+  'so',
+  'than',
+  'that',
+  'the',
+  'their',
+  'then',
+  'there',
+  'these',
+  'they',
+  'this',
+  'to',
+  'up',
+  'us',
+  'was',
+  'we',
+  'were',
+  'what',
+  'when',
+  'where',
+  'who',
+  'why',
+  'with',
+  'you',
+  'your',
+]);
+
+const tokenize = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+
+const pickSpecificKeyword = (title?: string, summary?: string) => {
+  const titleTokens = title ? tokenize(title) : [];
+  const titleCounts = new Map<string, number>();
+  titleTokens.forEach((token) => {
+    if (token.length < 4 || STOP_WORDS.has(token)) return;
+    titleCounts.set(token, (titleCounts.get(token) ?? 0) + 1);
+  });
+
+  const titleCandidates = [...titleCounts.entries()].sort(
+    (a, b) => b[0].length - a[0].length || b[1] - a[1],
+  );
+  if (titleCandidates.length) return titleCandidates[0][0];
+
+  const fallbackTokens = tokenize([title, summary].filter(Boolean).join(' '));
+  const fallbackCounts = new Map<string, number>();
+  fallbackTokens.forEach((token) => {
+    if (token.length < 4 || STOP_WORDS.has(token)) return;
+    fallbackCounts.set(token, (fallbackCounts.get(token) ?? 0) + 1);
+  });
+
+  const fallbackCandidates = [...fallbackCounts.entries()].sort(
+    (a, b) => b[0].length - a[0].length || b[1] - a[1],
+  );
+  return fallbackCandidates.length ? fallbackCandidates[0][0] : undefined;
+};
 
 const NewsCard: React.FC<NewsCardProps> = ({
   article,
@@ -39,11 +138,26 @@ const NewsCard: React.FC<NewsCardProps> = ({
   const displayLabel = label ?? (isFeatured ? 'Top story' : undefined);
   const imageSeed = article.source || article.url || article.title || 'paperboi';
   const palette = useMemo(() => getGeneratedPalette(imageSeed), [imageSeed]);
-  const initials = useMemo(
-    () => getInitials(article.source || article.title || article.url),
-    [article.source, article.title, article.url],
-  );
   const faviconUrl = useMemo(() => getFaviconUrl(article.url), [article.url]);
+  const fallbackImageUrl = useMemo(() => {
+    if (!__DEV__) return undefined;
+    return `https://picsum.photos/seed/${encodeURIComponent(imageSeed)}/1200/800`;
+  }, [imageSeed]);
+  const imageUrl = article.imageUrl || fallbackImageUrl;
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = Boolean(imageUrl) && !imageFailed;
+  const keywordText = useMemo(() => {
+    const keyword = pickSpecificKeyword(article.title, summary);
+    if (keyword) {
+      return keyword.toUpperCase();
+    }
+    const fallback = [article.topic, article.region, article.source].filter(Boolean);
+    return fallback[0]?.toUpperCase() || 'PAPERBOI';
+  }, [article.region, article.source, article.title, article.topic, summary]);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageUrl]);
 
   return (
     <Pressable
@@ -65,15 +179,26 @@ const NewsCard: React.FC<NewsCardProps> = ({
           { backgroundColor: palette.background },
         ]}
       >
-        <View style={[styles.imageAccent, { backgroundColor: palette.accent }]} />
-        <View style={[styles.imageGlow, { backgroundColor: palette.text }]} />
+        {showImage ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={styles.imageAsset}
+            resizeMode="cover"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <>
+            <View style={[styles.imageAccent, { backgroundColor: palette.accent }]} />
+            <View style={[styles.imageGlow, { backgroundColor: palette.text }]} />
+          </>
+        )}
         {faviconUrl ? (
           <View style={[styles.faviconWrap, { borderColor: palette.text }]}>
             <Image source={{ uri: faviconUrl }} style={styles.favicon} resizeMode="contain" />
           </View>
         ) : (
-          <Text variant="headlineSmall" style={[styles.imageInitials, { color: palette.text }]}>
-            {initials}
+          <Text variant="headlineSmall" style={styles.keywordText} numberOfLines={2}>
+            {keywordText}
           </Text>
         )}
       </View>
@@ -162,6 +287,9 @@ const styles = StyleSheet.create({
   featuredImage: {
     height: 220,
   },
+  imageAsset: {
+    ...StyleSheet.absoluteFillObject,
+  },
   imageAccent: {
     ...StyleSheet.absoluteFillObject,
     opacity: 0.45,
@@ -176,9 +304,17 @@ const styles = StyleSheet.create({
     top: -60,
     right: -80,
   },
-  imageInitials: {
-    letterSpacing: 2,
+  keywordText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
+    textAlign: 'center',
+    paddingHorizontal: 12,
+    zIndex: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.35)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
   },
   faviconWrap: {
     width: 56,
@@ -188,6 +324,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 2,
   },
   favicon: {
     width: 32,

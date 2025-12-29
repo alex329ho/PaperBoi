@@ -25,6 +25,7 @@ const ArticleDetail = () => {
   const summaries = useAppSelector((state) => state.news.summaries);
   const reports = useAppSelector((state) => state.news.reports);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [heroImageFailed, setHeroImageFailed] = useState(false);
 
   const article = useAppSelector(
     (state) => {
@@ -63,6 +64,19 @@ const ArticleDetail = () => {
       }
     : undefined;
 
+  const heroSeed = article?.source || article?.url || article?.title || 'paperboi';
+  const heroPalette = getGeneratedPalette(heroSeed);
+  const faviconUrl = getFaviconUrl(article?.url);
+  const faviconFallback = getInitials(article?.source || article?.title || article?.url);
+  const fallbackImageUrl = __DEV__
+    ? `https://picsum.photos/seed/${encodeURIComponent(heroSeed)}/1400/900`
+    : undefined;
+  const heroImageUrl = article?.imageUrl || fallbackImageUrl;
+  const showHeroImage = Boolean(heroImageUrl) && !heroImageFailed;
+  const heroTextColor = dark ? colors.onSurface : colors.onPrimary;
+  const graphBarColor = colors.primary;
+  const sectionTitleStyle = { fontSize: 20, lineHeight: 26 };
+
   useEffect(() => {
     if (!article || !summaryKey || normalizedReport || isSummarizing) {
       return;
@@ -80,6 +94,10 @@ const ArticleDetail = () => {
     );
     Promise.resolve(result).finally(() => setIsSummarizing(false));
   }, [article, dispatch, isSummarizing, normalizedReport, summaryKey, summaryLength]);
+
+  useEffect(() => {
+    setHeroImageFailed(false);
+  }, [heroImageUrl]);
 
   if (!article) {
     return (
@@ -108,20 +126,17 @@ const ArticleDetail = () => {
     Linking.openURL(`mailto:?subject=${subject}&body=${body}`).catch(() => shareArticle(article));
   };
 
-  const heroSeed = article.source || article.url || article.title || 'paperboi';
-  const heroPalette = getGeneratedPalette(heroSeed);
-  const faviconUrl = getFaviconUrl(article.url);
-  const faviconFallback = getInitials(article.source || article.title || article.url);
-  const heroTextColor = dark ? colors.onSurface : colors.onPrimary;
-  const graphBarColor = colors.primary;
-  const sectionTitleStyle = { fontSize: 20, lineHeight: 26 };
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={styles.heroWrapper}>
-        {article.imageUrl ? (
-          <ImageBackground source={{ uri: article.imageUrl }} style={styles.hero} resizeMode="cover">
+        {showHeroImage ? (
+          <ImageBackground
+            source={{ uri: heroImageUrl }}
+            style={styles.hero}
+            resizeMode="cover"
+            onError={() => setHeroImageFailed(true)}
+          >
             <View style={styles.heroOverlay} />
             <View style={styles.heroTop}>
                 <IconButton
@@ -174,13 +189,21 @@ const ArticleDetail = () => {
                 />
               </View>
             </View>
-            <View style={[styles.heroBadge, { borderColor: heroPalette.text }]}>
+            <View
+              style={[
+                styles.heroBadge,
+                {
+                  borderColor: heroPalette.text,
+                  backgroundColor: faviconUrl
+                    ? 'rgba(255, 255, 255, 0.85)'
+                    : heroPalette.accent,
+                },
+              ]}
+            >
               {faviconUrl ? (
                 <Image source={{ uri: faviconUrl }} style={styles.heroFavicon} resizeMode="contain" />
               ) : (
-                <Text style={[styles.heroFallbackText, { color: heroPalette.text }]}>
-                  {faviconFallback}
-                </Text>
+                <Text style={styles.heroFallbackText}>{faviconFallback}</Text>
               )}
             </View>
             <View style={styles.heroContent}>
@@ -423,18 +446,19 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 16,
     marginTop: 8,
     borderWidth: 1,
+    zIndex: 2,
   },
   heroFavicon: {
     width: 32,
     height: 32,
   },
   heroFallbackText: {
+    color: '#FFFFFF',
     fontWeight: '700',
     letterSpacing: 2,
     textTransform: 'uppercase',
