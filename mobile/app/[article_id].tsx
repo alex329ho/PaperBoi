@@ -224,8 +224,6 @@ const ArticleDetail = () => {
             <SummaryCard
               title="Summary"
               summary={normalizedReport.summary}
-              expandable
-              defaultExpanded
               titleStyle={sectionTitleStyle}
             />
             <Card mode="outlined" style={styles.reportCard}>
@@ -312,8 +310,6 @@ const ArticleDetail = () => {
           <SummaryCard
             title="Summary"
             summary={summaryText}
-            expandable
-            defaultExpanded
             titleStyle={sectionTitleStyle}
           />
         ) : isSummarizing ? (

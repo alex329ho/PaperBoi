@@ -1,29 +1,37 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { TextStyle } from 'react-native';
-import { Button, Card, Text, useTheme } from 'react-native-paper';
+import { Card, Text, useTheme } from 'react-native-paper';
 
 interface SummaryCardProps {
   title: string;
   summary: string;
-  expandable?: boolean;
-  defaultExpanded?: boolean;
   titleStyle?: TextStyle;
 }
 
 const SummaryCard: React.FC<SummaryCardProps> = ({
   title,
   summary,
-  expandable = true,
-  defaultExpanded = false,
   titleStyle,
 }) => {
   const { colors } = useTheme();
-  const [expanded, setExpanded] = useState(defaultExpanded);
-  const content = useMemo(() => {
-    if (!expandable) return summary;
-    if (expanded) return summary;
-    return summary.length > 220 ? `${summary.slice(0, 220)}…` : summary;
-  }, [expandable, expanded, summary]);
+  const summaryText = useMemo(() => {
+    const sentenceChunks =
+      summary.match(/[^.!?\n]+[.!?]?/g)?.map((chunk) => chunk.trim()).filter(Boolean) ??
+      [summary.trim()].filter(Boolean);
+    const seen = new Set<string>();
+    const uniqueSentences: string[] = [];
+    sentenceChunks.forEach((chunk) => {
+      const normalized = chunk.toLowerCase().replace(/\s+/g, ' ');
+      if (seen.has(normalized)) return;
+      seen.add(normalized);
+      uniqueSentences.push(chunk);
+    });
+    const cleaned = uniqueSentences.join(' ');
+    const words = cleaned.split(/\s+/).filter(Boolean);
+    const expandedLimit = 200;
+    return words.slice(0, expandedLimit).join(' ');
+  }, [summary]);
+  const content = summaryText;
 
   return (
     <Card
@@ -35,14 +43,6 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
         <Text selectable accessibilityRole="text">
           {content}
         </Text>
-        {expandable && summary.length > 220 ? (
-          <Button
-            onPress={() => setExpanded(!expanded)}
-            accessibilityLabel="Toggle summary details"
-          >
-            {expanded ? 'Show Less' : 'Show More'}
-          </Button>
-        ) : null}
       </Card.Content>
     </Card>
   );
